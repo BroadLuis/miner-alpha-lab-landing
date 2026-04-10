@@ -1,0 +1,1665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Miner Alpha Lab — Mining Sector Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-dim: #8A6D2F;
+    --gold-bright: #F0C96B;
+    --obsidian: #0A0A08;
+    --charcoal: #111110;
+    --surface: #16160F;
+    --surface-2: #1E1E15;
+    --border: #2A2A1E;
+    --border-bright: #3A3A28;
+    --text: #E8E4D8;
+    --text-dim: #8A8470;
+    --text-muted: #4A4838;
+    --green: #4CAF7A;
+    --red: #C94C4C;
+    --copper: #B87333;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--obsidian);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+  }
+
+  /* GRAIN OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.35;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 20px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(to bottom, rgba(10,10,8,0.95) 0%, transparent 100%);
+    backdrop-filter: blur(2px);
+  }
+
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+
+  .logo-mark {
+    width: 28px;
+    height: 28px;
+    background: var(--gold);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    flex-shrink: 0;
+  }
+
+  .logo-text {
+    font-family: 'DM Serif Display', serif;
+    font-size: 17px;
+    color: var(--text);
+    letter-spacing: 0.02em;
+  }
+
+  .logo-text span {
+    color: var(--gold);
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    text-decoration: none;
+    color: var(--text-dim);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--text); }
+
+  .nav-cta {
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold) !important;
+    padding: 8px 20px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px !important;
+    letter-spacing: 0.1em !important;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .nav-cta:hover {
+    background: var(--gold) !important;
+    color: var(--obsidian) !important;
+  }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    padding: 120px 48px 80px;
+    gap: 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -200px;
+    right: -100px;
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(circle, rgba(201,168,76,0.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border), transparent);
+  }
+
+  .hero-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+
+  .eyebrow-line {
+    width: 32px;
+    height: 1px;
+    background: var(--gold);
+  }
+
+  .eyebrow-text {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .hero-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(40px, 4.5vw, 68px);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    margin-bottom: 24px;
+  }
+
+  .hero-title em {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .hero-sub {
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--text-dim);
+    max-width: 480px;
+    margin-bottom: 44px;
+    font-weight: 300;
+  }
+
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    background: var(--gold);
+    color: var(--obsidian);
+    border: none;
+    padding: 14px 32px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.15);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .btn-primary:hover::after { opacity: 1; }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-dim);
+    border: none;
+    padding: 14px 0;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.2s;
+  }
+
+  .btn-ghost:hover { color: var(--text); }
+  .btn-ghost::after { content: '→'; transition: transform 0.2s; }
+  .btn-ghost:hover::after { transform: translateX(4px); }
+
+  .hero-stats {
+    display: flex;
+    gap: 40px;
+    margin-top: 56px;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+  }
+
+  .stat-item {}
+  .stat-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    color: var(--gold);
+    display: block;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 4px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* HERO RIGHT — MINI CHART WIDGET */
+  .hero-widget {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-widget::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(to right, var(--gold), var(--gold-dim), transparent);
+  }
+
+  .widget-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .widget-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .live-dot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--green);
+    letter-spacing: 0.1em;
+  }
+
+  .live-dot::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .mini-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .mini-table th {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 10px 20px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.2);
+  }
+
+  .mini-table td {
+    padding: 10px 20px;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(42,42,30,0.5);
+  }
+
+  .mini-table tr:hover td { background: rgba(201,168,76,0.04); }
+
+  .rank-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    font-weight: 500;
+  }
+
+  .ticker {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .score-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .score-bar {
+    height: 3px;
+    background: var(--border);
+    flex: 1;
+    max-width: 60px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .score-bar-fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: var(--gold);
+  }
+
+  .score-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--gold-bright);
+    min-width: 28px;
+  }
+
+  .change-up { color: var(--green); font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
+  .change-dn { color: var(--red); font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
+
+  .widget-footer {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0,0,0,0.15);
+  }
+
+  .widget-footer-note {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+  }
+
+  /* TICKER TAPE */
+  .ticker-tape {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 0;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .ticker-tape-inner {
+    display: flex;
+    gap: 0;
+    animation: tape 35s linear infinite;
+    white-space: nowrap;
+  }
+
+  @keyframes tape {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  .tape-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 32px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    border-right: 1px solid var(--border);
+  }
+
+  .tape-ticker { color: var(--text-dim); }
+  .tape-val { color: var(--text); }
+  .tape-chg-up { color: var(--green); }
+  .tape-chg-dn { color: var(--red); }
+
+  /* DEMO SECTION */
+  .section {
+    padding: 100px 48px;
+    position: relative;
+  }
+
+  .section-header {
+    margin-bottom: 56px;
+  }
+
+  .section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-label::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 1px;
+    background: var(--gold);
+  }
+
+  .section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(28px, 3vw, 44px);
+    line-height: 1.1;
+    max-width: 560px;
+  }
+
+  .section-title em { font-style: italic; color: var(--gold); }
+
+  .section-sub {
+    font-size: 15px;
+    color: var(--text-dim);
+    margin-top: 16px;
+    max-width: 520px;
+    line-height: 1.7;
+  }
+
+  /* RANKINGS TABLE */
+  .table-wrapper {
+    position: relative;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .table-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(to right, var(--gold), var(--copper), transparent);
+    z-index: 2;
+  }
+
+  .table-toolbar {
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    position: relative;
+  }
+
+  .toolbar-btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    cursor: not-allowed;
+    letter-spacing: 0.08em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+    opacity: 0.6;
+    transition: opacity 0.2s, border-color 0.2s, color 0.2s;
+  }
+
+  .toolbar-btn.locked {
+    cursor: pointer;
+  }
+
+  .toolbar-btn.locked:hover {
+    opacity: 1;
+    border-color: var(--gold-dim);
+    color: var(--gold);
+  }
+
+  .toolbar-btn.locked::after {
+    content: '🔒';
+    font-size: 10px;
+  }
+
+  .toolbar-btn.locked:hover::after {
+    content: 'Unlock with PRO →';
+    font-size: 9px;
+    letter-spacing: 0.08em;
+  }
+
+  /* PRO MODAL */
+  .pro-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    backdrop-filter: blur(4px);
+  }
+
+  .pro-modal-backdrop.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .pro-modal {
+    background: var(--surface);
+    border: 1px solid var(--border-bright);
+    max-width: 400px;
+    width: 90%;
+    padding: 40px 36px;
+    position: relative;
+    transform: translateY(16px);
+    transition: transform 0.25s ease;
+  }
+
+  .pro-modal-backdrop.active .pro-modal {
+    transform: translateY(0);
+  }
+
+  .pro-modal::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(to right, var(--gold), var(--gold-dim), transparent);
+  }
+
+  .pro-modal-close {
+    position: absolute;
+    top: 16px; right: 16px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s;
+  }
+
+  .pro-modal-close:hover { color: var(--text); }
+
+  .pro-modal-icon {
+    font-size: 28px;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  .pro-modal-eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--gold);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .pro-modal-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 24px;
+    margin-bottom: 10px;
+    line-height: 1.2;
+  }
+
+  .pro-modal-title em { color: var(--gold); font-style: italic; }
+
+  .pro-modal-text {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.7;
+    margin-bottom: 28px;
+    font-weight: 300;
+  }
+
+  .col-locked-click {
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  .col-locked-click:hover { opacity: 0.8; }
+
+  .toolbar-label {
+    margin-left: auto;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+  }
+
+  .rankings-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--charcoal);
+  }
+
+  .rankings-table th {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 12px 24px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: relative;
+  }
+
+  .col-locked {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    opacity: 0.4;
+  }
+
+  .rankings-table td {
+    padding: 13px 24px;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(42,42,30,0.4);
+    vertical-align: middle;
+  }
+
+  .rankings-table tbody tr { transition: background 0.15s; }
+  .rankings-table tbody tr:hover td { background: rgba(201,168,76,0.03); }
+
+  .rank-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--gold);
+    font-weight: 500;
+  }
+
+  .rank-top { color: var(--gold-bright); font-weight: 700; }
+
+  .asset-name {
+    font-weight: 400;
+    color: var(--text);
+  }
+
+  .asset-ticker-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-left: 8px;
+  }
+
+  .sector-tag {
+    display: inline-block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .sector-gold { background: rgba(201,168,76,0.12); color: var(--gold); }
+  .sector-silver { background: rgba(180,180,200,0.1); color: #B0B0C8; }
+  .sector-copper { background: rgba(184,115,51,0.12); color: var(--copper); }
+  .sector-junior { background: rgba(76,175,122,0.1); color: var(--green); }
+
+  .score-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .score-track {
+    width: 80px;
+    height: 4px;
+    background: var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .score-fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: linear-gradient(to right, var(--gold-dim), var(--gold));
+  }
+
+  .score-val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--gold);
+    min-width: 32px;
+  }
+
+  /* BLUR ROWS */
+  .blur-row td {
+    position: relative;
+  }
+
+  .blur-row td > * {
+    filter: blur(5px);
+    user-select: none;
+    pointer-events: none;
+  }
+
+  /* UPGRADE OVERLAY */
+  .table-upgrade-overlay {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 280px;
+    background: linear-gradient(to top, rgba(10,10,8,0.98) 30%, transparent 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding-bottom: 36px;
+    z-index: 10;
+  }
+
+  .upgrade-callout {
+    text-align: center;
+  }
+
+  .upgrade-callout-eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .upgrade-callout-text {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+
+  .upgrade-callout-text em { color: var(--gold); font-style: italic; }
+
+  .upgrade-callout-sub {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 24px;
+    font-weight: 300;
+  }
+
+  /* VALUE BLOCKS */
+  .value-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    margin-top: 16px;
+    border: 1px solid var(--border);
+  }
+
+  .value-block {
+    background: var(--charcoal);
+    padding: 36px 32px;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.2s;
+  }
+
+  .value-block:hover { background: var(--surface); }
+
+  .value-block::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: transparent;
+    transition: background 0.2s;
+  }
+
+  .value-block:hover::before { background: var(--gold); }
+
+  .block-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.15em;
+    margin-bottom: 24px;
+    display: block;
+  }
+
+  .block-icon {
+    font-size: 24px;
+    margin-bottom: 20px;
+    display: block;
+    filter: grayscale(0.4);
+  }
+
+  .block-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    margin-bottom: 12px;
+    line-height: 1.2;
+  }
+
+  .block-text {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.7;
+    font-weight: 300;
+  }
+
+  .block-tag {
+    display: inline-block;
+    margin-top: 20px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--gold-dim);
+    padding-bottom: 2px;
+  }
+
+  /* PRO FEATURE MATRIX */
+  .feature-matrix {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    background: var(--border);
+    margin-top: 48px;
+    border: 1px solid var(--border);
+  }
+
+  .feature-col {
+    background: var(--charcoal);
+    padding: 32px;
+  }
+
+  .feature-col-header {
+    margin-bottom: 28px;
+  }
+
+  .plan-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    margin-bottom: 12px;
+    display: inline-block;
+  }
+
+  .plan-badge.free { background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); }
+  .plan-badge.pro { background: rgba(201,168,76,0.15); color: var(--gold); border: 1px solid var(--gold-dim); }
+
+  .plan-name {
+    font-family: 'DM Serif Display', serif;
+    font-size: 26px;
+    margin-bottom: 6px;
+  }
+
+  .plan-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 300;
+  }
+
+  .feature-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .feature-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .feature-item .fi-icon {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    min-width: 16px;
+    margin-top: 1px;
+  }
+
+  .fi-check { color: var(--green); }
+  .fi-lock { color: var(--text-muted); opacity: 0.5; }
+  .fi-locked-text { color: var(--text-muted); text-decoration: line-through; opacity: 0.5; }
+
+  /* CONVERSION SECTION */
+  .conversion-section {
+    padding: 120px 48px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .conversion-section::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(201,168,76,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .conversion-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .conversion-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(32px, 4vw, 58px);
+    line-height: 1.05;
+    margin-bottom: 20px;
+    max-width: 680px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .conversion-title em { font-style: italic; color: var(--gold); }
+
+  .conversion-sub {
+    font-size: 16px;
+    color: var(--text-dim);
+    max-width: 480px;
+    margin: 0 auto 44px;
+    line-height: 1.7;
+    font-weight: 300;
+  }
+
+  .cta-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .price-note {
+    margin-top: 24px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+  }
+
+  .pricing-card-group {
+    display: flex;
+    gap: 2px;
+    max-width: 680px;
+    margin: 0 auto 48px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+
+  .pricing-card {
+    flex: 1;
+    padding: 32px 28px;
+    background: var(--charcoal);
+  }
+
+  .pricing-card.featured {
+    background: var(--surface);
+    position: relative;
+  }
+
+  .pricing-card.featured::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(to right, var(--gold), var(--gold-dim));
+  }
+
+  .pricing-tier {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .pricing-price {
+    font-family: 'DM Serif Display', serif;
+    font-size: 36px;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .pricing-price span {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+
+  .pricing-period {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    margin-bottom: 24px;
+  }
+
+  .pricing-features {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 28px;
+    text-align: left;
+    font-size: 12px;
+    color: var(--text-dim);
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: 0.03em;
+  }
+
+  .pf-check::before { content: '✓  '; color: var(--green); }
+  .pf-lock::before { content: '–  '; color: var(--text-muted); opacity: 0.5; }
+
+  .btn-full {
+    display: block;
+    width: 100%;
+    text-align: center;
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 40px 48px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .footer-note {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 24px;
+    list-style: none;
+  }
+
+  .footer-links a {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-decoration: none;
+    letter-spacing: 0.06em;
+    transition: color 0.2s;
+  }
+
+  .footer-links a:hover { color: var(--text-dim); }
+
+  /* UTILITIES */
+  .divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border), transparent);
+    margin: 0 48px;
+  }
+
+  .text-gold { color: var(--gold); }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .fade-up { animation: fadeUp 0.7s ease both; }
+  .delay-1 { animation-delay: 0.1s; }
+  .delay-2 { animation-delay: 0.2s; }
+  .delay-3 { animation-delay: 0.3s; }
+  .delay-4 { animation-delay: 0.4s; }
+  .delay-5 { animation-delay: 0.55s; }
+
+  /* RESPONSIVE */
+  @media (max-width: 1024px) {
+    .hero { grid-template-columns: 1fr; padding: 100px 24px 64px; gap: 48px; }
+    .value-grid { grid-template-columns: 1fr 1fr; }
+    .feature-matrix { grid-template-columns: 1fr; }
+    nav { padding: 20px 24px; }
+    .nav-links { display: none; }
+    .section { padding: 72px 24px; }
+    .conversion-section { padding: 80px 24px; }
+    footer { padding: 32px 24px; flex-direction: column; gap: 20px; text-align: center; }
+    .divider { margin: 0 24px; }
+    .table-toolbar { overflow-x: auto; }
+  }
+
+  @media (max-width: 640px) {
+    .value-grid { grid-template-columns: 1fr; }
+    .hero-stats { gap: 24px; }
+    .pricing-card-group { flex-direction: column; }
+  }
+
+  /* SCROLL REVEAL via intersection observer workaround */
+  .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="logo-mark"></div>
+    <span class="logo-text">Miner<span>Alpha</span> Lab</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#rankings">Rankings</a></li>
+    <li><a href="#methodology">Methodology</a></li>
+    <li><a href="https://mineralphalab.streamlit.app/">Access PRO</a></li>
+    <li><a href="https://mineralphalab.streamlit.app/" class="nav-cta">Access PRO</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-eyebrow fade-up">
+      <div class="eyebrow-line"></div>
+      <span class="eyebrow-text">Mining Sector Intelligence</span>
+    </div>
+    <h1 class="hero-title fade-up delay-1">
+      Track <em>leadership</em><br>before it becomes<br>consensus.
+    </h1>
+    <p class="hero-sub fade-up delay-2">
+      Position early. Or pay for confirmation later. The structure is already shifting.<br><br>Miner Alpha Lab ranks 1,300+ mining assets weekly using proprietary momentum, relative strength, and capital flow metrics. The signal is here before the crowd arrives.
+    </p>
+    <div class="hero-actions fade-up delay-3">
+      <a href="https://mineralphalab.streamlit.app/" class="btn-primary">Unlock Full Market Map</a>
+      <a href="#rankings" class="btn-ghost">Preview Rankings</a>
+    </div>
+    <div class="hero-stats fade-up delay-4">
+      <div class="stat-item">
+        <span class="stat-num">1,300+</span>
+        <span class="stat-label">Assets Tracked</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">Weekly</span>
+        <span class="stat-label">Rankings Update</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">4</span>
+        <span class="stat-label">Sectors Covered</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-right fade-up delay-5">
+    <div class="hero-widget">
+      <div class="widget-header">
+        <span class="widget-title">Current Rankings</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:0.1em;">Latest Snapshot</span>
+      </div>
+      <table class="mini-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Ticker</th>
+            <th>Score</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="rank-badge rank-top">#1</span></td>
+            <td><span class="ticker">AGI</span></td>
+            <td><div class="score-bar-wrap"><div class="score-bar"><div class="score-bar-fill" style="width:94%"></div></div><span class="score-num">94</span></div></td>
+          </tr>
+          <tr>
+            <td><span class="rank-badge rank-top">#2</span></td>
+            <td><span class="ticker">WPM</span></td>
+            <td><div class="score-bar-wrap"><div class="score-bar"><div class="score-bar-fill" style="width:91%"></div></div><span class="score-num">91</span></div></td>
+          </tr>
+          <tr>
+            <td><span class="rank-badge">#3</span></td>
+            <td><span class="ticker">KGC</span></td>
+            <td><div class="score-bar-wrap"><div class="score-bar"><div class="score-bar-fill" style="width:88%"></div></div><span class="score-num">88</span></div></td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="padding:10px 20px;border-top:1px solid var(--border);background:rgba(0,0,0,0.2);">
+        <p style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:0.1em;text-align:center;">Partial dataset — full structure restricted</p>
+      </div>
+      <div class="widget-footer">
+        <span class="widget-footer-note">Showing top-ranked assets (partial view)</span>
+        <a href="#rankings" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold);text-decoration:none;letter-spacing:0.08em;">View Full Rankings →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER TAPE -->
+<div class="ticker-tape">
+  <div class="ticker-tape-inner">
+    <span class="tape-item"><span class="tape-ticker">GOLD</span><span class="tape-val">$2,342</span><span class="tape-chg-up">+0.8%</span></span>
+    <span class="tape-item"><span class="tape-ticker">SILVER</span><span class="tape-val">$27.14</span><span class="tape-chg-up">+1.2%</span></span>
+    <span class="tape-item"><span class="tape-ticker">COPPER</span><span class="tape-val">$4.18/lb</span><span class="tape-chg-dn">−0.4%</span></span>
+    <span class="tape-item"><span class="tape-ticker">GDX</span><span class="tape-val">$34.82</span><span class="tape-chg-up">+1.6%</span></span>
+    <span class="tape-item"><span class="tape-ticker">GDXJ</span><span class="tape-val">$41.07</span><span class="tape-chg-up">+2.1%</span></span>
+    <span class="tape-item"><span class="tape-ticker">SIL</span><span class="tape-val">$29.44</span><span class="tape-chg-up">+0.9%</span></span>
+    <span class="tape-item"><span class="tape-ticker">COPX</span><span class="tape-val">$48.22</span><span class="tape-chg-dn">−0.2%</span></span>
+    <span class="tape-item"><span class="tape-ticker">AGI</span><span class="tape-val">$18.73</span><span class="tape-chg-up">+3.4%</span></span>
+    <span class="tape-item"><span class="tape-ticker">WPM</span><span class="tape-val">$52.11</span><span class="tape-chg-up">+1.8%</span></span>
+    <span class="tape-item"><span class="tape-ticker">KGC</span><span class="tape-val">$7.44</span><span class="tape-chg-up">+2.7%</span></span>
+    <!-- Duplicate for seamless loop -->
+    <span class="tape-item"><span class="tape-ticker">GOLD</span><span class="tape-val">$2,342</span><span class="tape-chg-up">+0.8%</span></span>
+    <span class="tape-item"><span class="tape-ticker">SILVER</span><span class="tape-val">$27.14</span><span class="tape-chg-up">+1.2%</span></span>
+    <span class="tape-item"><span class="tape-ticker">COPPER</span><span class="tape-val">$4.18/lb</span><span class="tape-chg-dn">−0.4%</span></span>
+    <span class="tape-item"><span class="tape-ticker">GDX</span><span class="tape-val">$34.82</span><span class="tape-chg-up">+1.6%</span></span>
+    <span class="tape-item"><span class="tape-ticker">GDXJ</span><span class="tape-val">$41.07</span><span class="tape-chg-up">+2.1%</span></span>
+    <span class="tape-item"><span class="tape-ticker">SIL</span><span class="tape-val">$29.44</span><span class="tape-chg-up">+0.9%</span></span>
+    <span class="tape-item"><span class="tape-ticker">COPX</span><span class="tape-val">$48.22</span><span class="tape-chg-dn">−0.2%</span></span>
+    <span class="tape-item"><span class="tape-ticker">AGI</span><span class="tape-val">$18.73</span><span class="tape-chg-up">+3.4%</span></span>
+    <span class="tape-item"><span class="tape-ticker">WPM</span><span class="tape-val">$52.11</span><span class="tape-chg-up">+1.8%</span></span>
+    <span class="tape-item"><span class="tape-ticker">KGC</span><span class="tape-val">$7.44</span><span class="tape-chg-up">+2.7%</span></span>
+  </div>
+</div>
+
+<!-- RANKINGS DEMO SECTION -->
+<section class="section" id="rankings">
+  <div class="section-header reveal">
+    <div class="section-label">Weekly Rankings</div>
+    <h2 class="section-title">This week's sector <em>leaders</em>.<br>Partial view.</h2>
+    <p class="section-sub">Updated weekly across 1,300+ assets using a multi-factor ranking engine. The free view shows you the direction of capital. PRO shows you the full structure — ranked, filtered, and alert-ready.</p>
+  </div>
+
+  <div class="table-wrapper reveal">
+    <div class="table-toolbar">
+      <div class="toolbar-btn locked" onclick="showProModal()">Sector Filter</div>
+      <div class="toolbar-btn locked" onclick="showProModal()">Market Cap</div>
+      <div class="toolbar-btn locked" onclick="showProModal()">Momentum ▾</div>
+      <div class="toolbar-btn locked" onclick="showProModal()">Export CSV</div>
+      <span class="toolbar-label">PRO features locked</span>
+    </div>
+
+    <table class="rankings-table">
+      <thead>
+        <tr>
+          <th style="width:64px">Rank</th>
+          <th>Asset</th>
+          <th>Score</th>
+          <th><div class="col-locked">🔒 RS Rank</div></th>
+          <th><div class="col-locked">🔒 Vol Signal</div></th>
+          <th><div class="col-locked">🔒 30d Trend</div></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="rank-num rank-top">#1</span></td>
+          <td><span class="asset-name">Alamos Gold</span><span class="asset-ticker-tag">AGI</span></td>
+          <td><div class="score-cell"><div class="score-track"><div class="score-fill" style="width:92%"></div></div><span class="score-val">92</span></div></td>
+          <td style="color:var(--text-muted);filter:blur(4px);user-select:none">Top 3%</td>
+          <td style="color:var(--green);filter:blur(4px);user-select:none">Breakout</td>
+          <td style="filter:blur(4px);user-select:none">↑↑↑</td>
+        </tr>
+        <tr>
+          <td><span class="rank-num rank-top">#2</span></td>
+          <td><span class="asset-name">Wheaton Precious</span><span class="asset-ticker-tag">WPM</span></td>
+          <td><div class="score-cell"><div class="score-track"><div class="score-fill" style="width:89%"></div></div><span class="score-val">89</span></div></td>
+          <td style="filter:blur(4px);user-select:none">Top 5%</td>
+          <td style="filter:blur(4px);user-select:none">Accumulate</td>
+          <td style="filter:blur(4px);user-select:none">↑↑</td>
+        </tr>
+        <tr>
+          <td><span class="rank-num">#3</span></td>
+          <td><span class="asset-name">Kinross Gold</span><span class="asset-ticker-tag">KGC</span></td>
+          <td><div class="score-cell"><div class="score-track"><div class="score-fill" style="width:87%"></div></div><span class="score-val">87</span></div></td>
+          <td style="filter:blur(4px);user-select:none">Top 8%</td>
+          <td style="filter:blur(4px);user-select:none">Rising</td>
+          <td style="filter:blur(4px);user-select:none">↑↑</td>
+        </tr>
+        <tr style="opacity:0.72;">
+          <td><span class="rank-num">#4</span></td>
+          <td><span class="asset-name">Barrick Gold</span><span class="asset-ticker-tag">GOLD</span></td>
+          <td><div class="score-cell"><div class="score-track"><div class="score-fill" style="width:86%"></div></div><span class="score-val">86</span></div></td>
+          <td style="filter:blur(4px);user-select:none">Top 10%</td>
+          <td style="filter:blur(4px);user-select:none">Neutral</td>
+          <td style="filter:blur(4px);user-select:none">↑</td>
+        </tr>
+        <tr style="opacity:0.48;">
+          <td><span class="rank-num">#5</span></td>
+          <td><span class="asset-name">Newmont Corp</span><span class="asset-ticker-tag">NEM</span></td>
+          <td><div class="score-cell"><div class="score-track"><div class="score-fill" style="width:83%"></div></div><span class="score-val">83</span></div></td>
+          <td style="filter:blur(4px);user-select:none">Top 12%</td>
+          <td style="filter:blur(4px);user-select:none">Neutral</td>
+          <td style="filter:blur(4px);user-select:none">→</td>
+        </tr>
+        <!-- Blur rows start at #6 -->
+        <tr class="blur-row">
+          <td><span class="rank-num">#6</span></td>
+          <td><span class="asset-name">First Majestic</span><span class="asset-ticker-tag">AG</span></td>
+          <td><div class="score-cell"><div class="score-track"><div class="score-fill" style="width:81%"></div></div><span class="score-val">81</span></div></td>
+          <td>Top 14%</td><td>Rising</td><td>↑</td>
+        </tr>
+        <tr class="blur-row">
+          <td><span class="rank-num">#7</span></td>
+          <td><span class="asset-name">Pan American Silver</span><span class="asset-ticker-tag">PAAS</span></td>
+          <td><div class="score-cell"><div class="score-track"><div class="score-fill" style="width:79%"></div></div><span class="score-val">79</span></div></td>
+          <td>Top 17%</td><td>Watch</td><td>→</td>
+        </tr>
+        <tr class="blur-row">
+          <td><span class="rank-num">#8</span></td>
+          <td><span class="asset-name">Freeport-McMoRan</span><span class="asset-ticker-tag">FCX</span></td>
+          <td><div class="score-cell"><div class="score-track"><div class="score-fill" style="width:77%"></div></div><span class="score-val">77</span></div></td>
+          <td>Top 19%</td><td>Breakout</td><td>↑↑</td>
+        </tr>
+        <tr class="blur-row">
+          <td><span class="rank-num">#9</span></td>
+          <td><span class="asset-name">Osisko Mining</span><span class="asset-ticker-tag">OSK</span></td>
+          <td><div class="score-cell"><div class="score-track"><div class="score-fill" style="width:75%"></div></div><span class="score-val">75</span></div></td>
+          <td>Top 21%</td><td>Accumulate</td><td>↑↑</td>
+        </tr>
+        <tr class="blur-row">
+          <td><span class="rank-num">#10</span></td>
+          <td><span class="asset-name">Torex Gold</span><span class="asset-ticker-tag">TXG</span></td>
+          <td><div class="score-cell"><div class="score-track"><div class="score-fill" style="width:73%"></div></div><span class="score-val">73</span></div></td>
+          <td>Top 23%</td><td>Rising</td><td>↑</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- UPGRADE OVERLAY -->
+    <div class="table-upgrade-overlay">
+      <div class="upgrade-callout">
+        <p class="upgrade-callout-eyebrow">1,295+ assets remaining</p>
+        <h3 class="upgrade-callout-text">The signal is already forming.<br><em>Most of it is still hidden.</em></h3>
+        <p class="upgrade-callout-sub" style="margin-bottom:6px;">The top 5 is not the edge. The edge is everything you can't see yet.</p>
+        <p class="upgrade-callout-sub">By the time it's visible, the move is already underway. Full rankings, signals, and positioning tools — PRO only.</p>
+        <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+          <a href="https://mineralphalab.streamlit.app/" class="btn-primary">Access PRO — See the Full Market Structure</a>
+          <a href="https://mineralphalab.streamlit.app/" class="btn-ghost">See what PRO includes</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- VALUE BLOCKS -->
+<section class="section" id="methodology">
+  <div class="section-header reveal">
+    <div class="section-label">Why It Works</div>
+    <h2 class="section-title">Built for <em>early</em><br>positioning.</h2>
+    <p class="section-sub">The edge in mining is temporal. Those who identify sector rotation before consensus don't need to predict — they need to be early.</p>
+  </div>
+
+  <div class="value-grid">
+    <div class="value-block reveal">
+      <span class="block-num">01</span>
+      <span class="block-icon">⚡</span>
+      <h3 class="block-title">Early Signal Detection</h3>
+      <p class="block-text">Our ranking engine identifies assets gaining relative strength before price confirmation. You see momentum building, not after the crowd has noticed it.</p>
+      <span class="block-tag">Proprietary RS Model</span>
+    </div>
+    <div class="value-block reveal">
+      <span class="block-num">02</span>
+      <span class="block-icon">🔁</span>
+      <h3 class="block-title">Capital Rotation Tracking</h3>
+      <p class="block-text">Monitor how institutional and speculative capital flows between gold, silver, copper, and juniors. Rotation is the signal. We map it every week — before the crowd prices it in.</p>
+      <span class="block-tag">Cross-Sector Flow Data</span>
+    </div>
+    <div class="value-block reveal">
+      <span class="block-num">03</span>
+      <span class="block-icon">📐</span>
+      <h3 class="block-title">Data-Driven Positioning</h3>
+      <p class="block-text">No narratives. No macro guessing. Every rank is derived from multi-factor quantitative scoring across price, volume, sector context, and historical behavior.</p>
+      <span class="block-tag">Quant-First Framework</span>
+    </div>
+    <div class="value-block reveal">
+      <span class="block-num">04</span>
+      <span class="block-icon">🗂</span>
+      <h3 class="block-title">Complete Sector Coverage</h3>
+      <p class="block-text">1,300+ assets across gold producers, silver streamers, copper plays, and junior explorers. If it moves metal, it's in the system.</p>
+      <span class="block-tag">1,300+ Assets Tracked</span>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FEATURE MATRIX (Free vs PRO) -->
+<section class="section">
+  <div class="section-header reveal">
+    <div class="section-label">Free vs PRO</div>
+    <h2 class="section-title">Free shows direction.<br><em>PRO gives you positioning.</em></h2>
+  </div>
+
+  <div class="feature-matrix reveal">
+    <div class="feature-col">
+      <div class="feature-col-header">
+        <span class="plan-badge free">Free</span>
+        <h3 class="plan-name">Guest Access</h3>
+        <p class="plan-desc">Enough to see the direction. Not enough to act on it.</p>
+      </div>
+      <ul class="feature-list">
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span>Top 10 weekly rankings (name + score)</li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span>Sector overview (4 categories)</li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span>Market-level ticker tape</li>
+        <li class="feature-item"><span class="fi-icon fi-lock">—</span><span class="fi-locked-text">Full 1,300+ asset rankings</span></li>
+        <li class="feature-item"><span class="fi-icon fi-lock">—</span><span class="fi-locked-text">RS Rank & Volume Signal columns</span></li>
+        <li class="feature-item"><span class="fi-icon fi-lock">—</span><span class="fi-locked-text">Sector & market-cap filters</span></li>
+        <li class="feature-item"><span class="fi-icon fi-lock">—</span><span class="fi-locked-text">30-day trend history</span></li>
+        <li class="feature-item"><span class="fi-icon fi-lock">—</span><span class="fi-locked-text">Price alerts & watchlists</span></li>
+        <li class="feature-item"><span class="fi-icon fi-lock">—</span><span class="fi-locked-text">CSV export</span></li>
+        <li class="feature-item"><span class="fi-icon fi-lock">—</span><span class="fi-locked-text">Junior discovery screen</span></li>
+      </ul>
+    </div>
+    <div class="feature-col">
+      <div class="feature-col-header">
+        <span class="plan-badge pro">PRO</span>
+        <h3 class="plan-name">Full Access</h3>
+        <p class="plan-desc">The complete dataset. Every signal. Every asset. Every day.</p>
+      </div>
+      <ul class="feature-list">
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span>See the full market structure — not just the top 10</li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span>Identify leadership before it becomes obvious</li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span>Track capital rotation across gold, silver, copper and juniors</li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span>Rank every asset by real relative strength and momentum</li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span>Filter the entire market by sector, size and signal type</li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span>Monitor how rankings evolve over time (90-day history)</li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span>Receive alerts when positioning is changing</li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span>Build and track your own watchlists</li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span>Export data for deeper analysis</li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span>Discover early-stage juniors before they run</li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span>Weekly briefings on where capital is moving next</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CONVERSION / PRICING SECTION -->
+<section class="conversion-section" id="pricing">
+  <div class="reveal">
+    <p class="conversion-label">Get Started</p>
+    <h2 class="conversion-title">Stop watching.<br>Start <em>positioning.</em></h2>
+    <p class="conversion-sub" style="margin-bottom:16px;">Most investors wait for confirmation.<br>By then, the move is already underway.</p>
+    <p style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-dim);letter-spacing:0.06em;line-height:2;max-width:400px;margin:0 auto 40px;text-align:left;border-left:2px solid var(--gold-dim);padding-left:20px;">In mining, information is everywhere.<br>Positioning is not.<br><br>The difference is timing.<br><span style="color:var(--gold);">The difference is structure.</span></p>
+  </div>
+
+  <div class="pricing-card-group reveal">
+    <div class="pricing-card">
+      <p class="pricing-tier">Free</p>
+      <p class="pricing-price">$0</p>
+      <p class="pricing-period">Forever free</p>
+      <ul class="pricing-features">
+        <li class="pf-check">Top 10 rankings weekly</li>
+        <li class="pf-check">4-sector overview</li>
+        <li class="pf-check">Live ticker tape</li>
+        <li class="pf-lock">Full dataset access</li>
+        <li class="pf-lock">Filters & alerts</li>
+        <li class="pf-lock">Historical data</li>
+      </ul>
+      <a href="https://mineralphalab.streamlit.app/" class="btn-ghost btn-full" style="justify-content:center;border:1px solid var(--border);padding:12px 24px;">Continue Free</a>
+    </div>
+
+    <div class="pricing-card featured">
+      <p class="pricing-tier">Pro</p>
+      <p class="pricing-price">$29.95 <span>/ mo</span></p>
+      <p class="pricing-period">Billed monthly — cancel anytime</p>
+      <p style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);letter-spacing:0.08em;margin-bottom:20px;margin-top:-8px;">Or $299.50 / year — 2 months free</p>
+      <ul class="pricing-features">
+        <li class="pf-check">1,300+ assets, complete rankings</li>
+        <li class="pf-check">RS Rank + Volume Signal + Momentum</li>
+        <li class="pf-check">All filters, alerts & watchlists</li>
+        <li class="pf-check">90-day historical data</li>
+        <li class="pf-check">CSV / JSON export</li>
+        <li class="pf-check">Weekly rotation briefing</li>
+      </ul>
+      <a href="https://mineralphalab.streamlit.app/" class="btn-primary btn-full" style="padding:14px 24px;">Start PRO — Position Before Consensus</a>
+    </div>
+  </div>
+
+  <p class="price-note reveal">14-day free trial on PRO &nbsp;·&nbsp; No card required to start &nbsp;·&nbsp; Full access from day one</p>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>
+    <a href="#" class="nav-logo" style="margin-bottom:8px;display:inline-flex;">
+      <div class="logo-mark" style="width:20px;height:20px;"></div>
+      <span class="logo-text" style="font-size:14px;margin-left:8px;">Miner<span>Alpha</span> Lab</span>
+    </a>
+    <p class="footer-note" style="margin-top:8px;">Data-driven intelligence for the mining sector.</p>
+  </div>
+  <ul class="footer-links">
+    <li><a href="#">Methodology</a></li>
+    <li><a href="#">Privacy</a></li>
+    <li><a href="#">Terms</a></li>
+    <li><a href="#">Contact</a></li>
+  </ul>
+</footer>
+
+<!-- PRO MODAL -->
+<div class="pro-modal-backdrop" id="proModal" onclick="hideProModal(event)">
+  <div class="pro-modal">
+    <button class="pro-modal-close" onclick="hideProModal()">×</button>
+    <span class="pro-modal-icon">🔒</span>
+    <p class="pro-modal-eyebrow">PRO Feature</p>
+    <h3 class="pro-modal-title">Unlock full<br><em>functionality.</em></h3>
+    <p class="pro-modal-text">This feature is restricted to PRO members. Access complete rankings, all signal columns, filters, alerts, and the full 1,300+ asset dataset.</p>
+    <a href="https://mineralphalab.streamlit.app/" class="btn-primary" style="display:block;text-align:center;" onclick="hideProModal()">Access PRO — See Full Market Structure</a>
+  </div>
+</div>
+
+<script>
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(el => {
+      if (el.isIntersecting) {
+        el.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Score bar animation on reveal
+  const scoreObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.querySelectorAll('.score-fill, .score-bar-fill').forEach(bar => {
+          const w = bar.style.width;
+          bar.style.width = '0';
+          setTimeout(() => { bar.style.transition = 'width 0.8s ease'; bar.style.width = w; }, 200);
+        });
+      }
+    });
+  }, { threshold: 0.2 });
+
+  document.querySelectorAll('.table-wrapper, .hero-widget').forEach(el => scoreObserver.observe(el));
+
+  // PRO modal
+  function showProModal() {
+    document.getElementById('proModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function hideProModal(e) {
+    if (!e || e.target === document.getElementById('proModal') || e.target.classList.contains('pro-modal-close') || e.target.closest('a')) {
+      document.getElementById('proModal').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  }
+
+  // Make locked column headers clickable
+  document.querySelectorAll('.col-locked').forEach(el => {
+    el.style.cursor = 'pointer';
+    el.addEventListener('click', showProModal);
+  });
+
+  // Make blurred cells clickable
+  document.querySelectorAll('.blur-row').forEach(row => {
+    row.style.cursor = 'pointer';
+    row.addEventListener('click', showProModal);
+  });
+</script>
+</body>
+</html>
