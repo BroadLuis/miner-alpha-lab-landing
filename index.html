@@ -1,0 +1,2470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Miner Alpha Lab — Portfolio Engine for Resource Equities</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;1,400&family=IBM+Plex+Mono:wght@300;400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #B8BFC8;
+    --gold-dim: #6E7680;
+    --gold-bright: #E8EBF0;
+    --obsidian: #080808;
+    --charcoal: #0F0F0F;
+    --surface: #141414;
+    --surface-2: #1A1A1A;
+    --border: #1E1E1E;
+    --border-bright: #2E2E2E;
+    --text: #D8D8D8;
+    --text-dim: #6A7A8A;
+    --text-muted: #3A3A3A;
+    --green: #6B9E7A;
+    --red: #A85858;
+    --copper: #A8AEB6;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--obsidian);
+    background-image: radial-gradient(ellipse 70% 35% at 50% -5%, rgba(184,191,200,0.05) 0%, transparent 55%);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+  }
+
+  /* GRAIN OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.10;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 20px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(to bottom, rgba(8,8,8,0.97) 0%, transparent 100%);
+    backdrop-filter: blur(2px);
+    box-sizing: border-box;
+    width: 100%;
+  }
+
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+
+  .logo-mark {
+    width: 28px;
+    height: 28px;
+    background: var(--gold);
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .logo-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    color: var(--text);
+    letter-spacing: 0.02em;
+  }
+
+  .logo-text span {
+    color: var(--gold);
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    text-decoration: none;
+    color: var(--text-dim);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--text); }
+
+  .nav-cta {
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold) !important;
+    padding: 8px 20px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px !important;
+    letter-spacing: 0.1em !important;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .nav-cta:hover {
+    background: rgba(184,191,200,0.12) !important;
+    color: var(--gold-bright) !important;
+  }
+
+  .nav-free {
+    color: var(--gold) !important;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px !important;
+    letter-spacing: 0.1em !important;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 8px 20px;
+    border: 1px solid rgba(184,191,200,0.35);
+    background: rgba(184,191,200,0.08);
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .nav-free::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    box-shadow: 0 0 14px rgba(184,191,200,0.18);
+    pointer-events: none;
+  }
+
+  .nav-free:hover {
+    background: rgba(184,191,200,0.18) !important;
+    border-color: var(--gold) !important;
+    box-shadow: 0 0 20px rgba(184,191,200,0.25);
+  }
+
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 1024px) {
+    .nav-actions .nav-free { display: flex; }
+  }
+
+  @media (max-width: 640px) {
+    nav {
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 12px 16px 10px;
+      gap: 8px;
+      width: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+    .nav-links { display: none; }
+    .nav-actions {
+      width: 100%;
+      display: flex;
+      gap: 6px;
+      box-sizing: border-box;
+    }
+    .nav-free,
+    .nav-cta {
+      flex: 1;
+      text-align: center;
+      font-size: 10px !important;
+      padding: 8px 6px !important;
+      letter-spacing: 0.04em !important;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+  }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    padding: 120px 48px 80px;
+    gap: 80px;
+    position: relative;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -200px;
+    right: -100px;
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(circle, rgba(184,191,200,0.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border), transparent);
+  }
+
+  .hero-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+
+  .eyebrow-line {
+    width: 32px;
+    height: 1px;
+    background: var(--gold);
+  }
+
+  .eyebrow-text {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 7vw, 68px);
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    margin-bottom: 24px;
+  }
+
+  .hero-title em {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .hero-sub {
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--text-dim);
+    max-width: 480px;
+    margin-bottom: 44px;
+    font-weight: 300;
+  }
+
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    background: var(--gold);
+    color: var(--obsidian);
+    border: none;
+    padding: 14px 32px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.15);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .btn-primary:hover::after { opacity: 1; }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-dim);
+    border: none;
+    padding: 14px 0;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.2s;
+  }
+
+  .btn-ghost:hover { color: var(--text); }
+  .btn-ghost::after { content: '→'; transition: transform 0.2s; }
+  .btn-ghost:hover::after { transform: translateX(4px); }
+
+  .hero-stats {
+    display: flex;
+    gap: 40px;
+    margin-top: 56px;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+  }
+
+  .stat-item {}
+  .stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    color: var(--gold);
+    display: block;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 4px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* HERO RIGHT — MINI CHART WIDGET */
+  .hero-widget {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-widget::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(to right, var(--gold), var(--gold-dim), transparent);
+  }
+
+  .widget-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .widget-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .live-dot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--green);
+    letter-spacing: 0.1em;
+  }
+
+  .live-dot::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .mini-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .mini-table th {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 10px 20px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.2);
+  }
+
+  .mini-table td {
+    padding: 10px 20px;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(42,42,30,0.5);
+  }
+
+  .mini-table tr:hover td { background: rgba(184,191,200,0.04); }
+
+  .rank-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    font-weight: 500;
+  }
+
+  .ticker {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .score-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .score-bar {
+    height: 3px;
+    background: var(--border);
+    flex: 1;
+    max-width: 60px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .score-bar-fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: var(--gold);
+  }
+
+  .score-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--gold-bright);
+    min-width: 28px;
+  }
+
+  .change-up { color: var(--green); font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
+  .change-dn { color: var(--red); font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
+
+  .widget-footer {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0,0,0,0.15);
+  }
+
+  .widget-footer-note {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+  }
+
+  /* TICKER TAPE */
+  .ticker-tape {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 0;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .ticker-tape-inner {
+    display: flex;
+    gap: 0;
+    animation: tape 35s linear infinite;
+    white-space: nowrap;
+  }
+
+  @keyframes tape {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  .tape-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 32px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    border-right: 1px solid var(--border);
+  }
+
+  .tape-ticker { color: var(--text-dim); }
+  .tape-val { color: var(--text); }
+  .tape-chg-up { color: var(--green); }
+  .tape-chg-dn { color: var(--red); }
+
+  /* DEMO SECTION */
+  .section {
+    padding: 100px 48px;
+    position: relative;
+  }
+
+  .section-header {
+    margin-bottom: 56px;
+  }
+
+  .section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-label::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 1px;
+    background: var(--gold);
+  }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 3vw, 44px);
+    line-height: 1.1;
+    max-width: 560px;
+  }
+
+  .section-title em { font-style: italic; color: var(--gold); }
+
+  .section-sub {
+    font-size: 15px;
+    color: var(--text-dim);
+    margin-top: 16px;
+    max-width: 520px;
+    line-height: 1.7;
+  }
+
+  /* RANKINGS TABLE */
+  .table-wrapper {
+    position: relative;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .table-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(to right, var(--gold), var(--copper), transparent);
+    z-index: 2;
+  }
+
+  .table-toolbar {
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    position: relative;
+  }
+
+  .toolbar-btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    cursor: not-allowed;
+    letter-spacing: 0.08em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+    opacity: 0.6;
+    transition: opacity 0.2s, border-color 0.2s, color 0.2s;
+  }
+
+  .toolbar-btn.locked {
+    cursor: pointer;
+  }
+
+  .toolbar-btn.locked:hover {
+    opacity: 1;
+    border-color: var(--gold-dim);
+    color: var(--gold);
+  }
+
+  .toolbar-btn.locked::after {
+    content: '🔒';
+    font-size: 10px;
+  }
+
+  .toolbar-btn.locked:hover::after {
+    content: 'Unlock with PRO →';
+    font-size: 9px;
+    letter-spacing: 0.08em;
+  }
+
+  /* PRO MODAL */
+  .pro-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    backdrop-filter: blur(4px);
+  }
+
+  .pro-modal-backdrop.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .pro-modal {
+    background: var(--surface);
+    border: 1px solid var(--border-bright);
+    max-width: 400px;
+    width: 90%;
+    padding: 40px 36px;
+    position: relative;
+    transform: translateY(16px);
+    transition: transform 0.25s ease;
+  }
+
+  .pro-modal-backdrop.active .pro-modal {
+    transform: translateY(0);
+  }
+
+  .pro-modal::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(to right, var(--gold), var(--gold-dim), transparent);
+  }
+
+  .pro-modal-close {
+    position: absolute;
+    top: 16px; right: 16px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s;
+  }
+
+  .pro-modal-close:hover { color: var(--text); }
+
+  .pro-modal-icon {
+    font-size: 28px;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  .pro-modal-eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--gold);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .pro-modal-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    margin-bottom: 10px;
+    line-height: 1.2;
+  }
+
+  .pro-modal-title em { color: var(--gold); font-style: italic; }
+
+  .pro-modal-text {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.7;
+    margin-bottom: 28px;
+    font-weight: 300;
+  }
+
+  .col-locked-click {
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  .col-locked-click:hover { opacity: 0.8; }
+
+  .toolbar-label {
+    margin-left: auto;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+  }
+
+  .rankings-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--charcoal);
+  }
+
+  .rankings-table th {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 12px 24px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: relative;
+  }
+
+  .col-locked {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    opacity: 0.4;
+  }
+
+  .rankings-table td {
+    padding: 13px 24px;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(42,42,30,0.4);
+    vertical-align: middle;
+  }
+
+  .rankings-table tbody tr { transition: background 0.15s; }
+  .rankings-table tbody tr:hover td { background: rgba(184,191,200,0.03); }
+
+  .rank-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--gold);
+    font-weight: 500;
+  }
+
+  .rank-top { color: var(--gold-bright); font-weight: 700; }
+
+  .asset-name {
+    font-weight: 400;
+    color: var(--text);
+  }
+
+  .asset-ticker-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-left: 8px;
+  }
+
+  .sector-tag {
+    display: inline-block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .sector-gold { background: rgba(184,191,200,0.12); color: var(--gold); }
+  .sector-silver { background: rgba(180,180,200,0.1); color: #B0B0C8; }
+  .sector-copper { background: rgba(184,115,51,0.12); color: var(--copper); }
+  .sector-junior { background: rgba(76,175,122,0.1); color: var(--green); }
+
+  .score-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .score-track {
+    width: 80px;
+    height: 4px;
+    background: var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .score-fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: linear-gradient(to right, var(--gold-dim), var(--gold));
+  }
+
+  .score-val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--gold);
+    min-width: 32px;
+  }
+
+  /* BLUR ROWS */
+  .blur-row td {
+    position: relative;
+  }
+
+  .blur-row td > * {
+    filter: blur(5px);
+    user-select: none;
+    pointer-events: none;
+  }
+
+  /* UPGRADE OVERLAY */
+  .table-upgrade-overlay {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 280px;
+    background: linear-gradient(to top, rgba(10,10,8,0.98) 30%, transparent 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding-bottom: 36px;
+    z-index: 10;
+  }
+
+  .upgrade-callout {
+    text-align: center;
+  }
+
+  .upgrade-callout-eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .upgrade-callout-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+
+  .upgrade-callout-text em { color: var(--gold); font-style: italic; }
+
+  .upgrade-callout-sub {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 24px;
+    font-weight: 300;
+  }
+
+  /* VALUE BLOCKS */
+  .value-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    margin-top: 16px;
+    border: 1px solid var(--border);
+  }
+
+  .value-block {
+    background: var(--charcoal);
+    padding: 36px 32px;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.2s;
+  }
+
+  .value-block:hover { background: var(--surface); }
+
+  .value-block::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: transparent;
+    transition: background 0.2s;
+  }
+
+  .value-block:hover::before { background: var(--gold); }
+
+  .block-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.15em;
+    margin-bottom: 24px;
+    display: block;
+  }
+
+  .block-icon {
+    font-size: 24px;
+    margin-bottom: 20px;
+    display: block;
+    filter: grayscale(0.4);
+  }
+
+  .block-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    margin-bottom: 12px;
+    line-height: 1.2;
+  }
+
+  .block-text {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.7;
+    font-weight: 300;
+  }
+
+  .block-tag {
+    display: inline-block;
+    margin-top: 20px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--gold-dim);
+    padding-bottom: 2px;
+  }
+
+  /* PRO FEATURE MATRIX */
+  .feature-matrix {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    background: var(--border);
+    margin-top: 48px;
+    border: 1px solid var(--border);
+  }
+
+  .feature-col {
+    background: var(--charcoal);
+    padding: 32px;
+  }
+
+  .feature-col-header {
+    margin-bottom: 28px;
+  }
+
+  .plan-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    margin-bottom: 12px;
+    display: inline-block;
+  }
+
+  .plan-badge.free { background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); }
+  .plan-badge.pro { background: rgba(184,191,200,0.15); color: var(--gold); border: 1px solid var(--gold-dim); }
+
+  .plan-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    margin-bottom: 6px;
+  }
+
+  .plan-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 300;
+  }
+
+  .feature-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .feature-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .feature-item .fi-icon {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    min-width: 16px;
+    margin-top: 1px;
+  }
+
+  .fi-check { color: var(--green); }
+  .fi-lock { color: var(--text-muted); opacity: 0.5; }
+  .fi-locked-text { color: var(--text-muted); text-decoration: line-through; opacity: 0.5; }
+
+  /* CONVERSION SECTION */
+  .conversion-section {
+    padding: 120px 48px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .conversion-section::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(184,191,200,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .conversion-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .conversion-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(32px, 4vw, 58px);
+    line-height: 1.05;
+    margin-bottom: 20px;
+    max-width: 680px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .conversion-title em { font-style: italic; color: var(--gold); }
+
+  .conversion-sub {
+    font-size: 16px;
+    color: var(--text-dim);
+    max-width: 480px;
+    margin: 0 auto 44px;
+    line-height: 1.7;
+    font-weight: 300;
+  }
+
+  .cta-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .price-note {
+    margin-top: 24px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+  }
+
+  .pricing-card-group {
+    display: flex;
+    gap: 2px;
+    max-width: 680px;
+    margin: 0 auto 48px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+
+  .pricing-card {
+    flex: 1;
+    padding: 32px 28px;
+    background: var(--charcoal);
+  }
+
+  .pricing-card.featured {
+    background: var(--surface);
+    position: relative;
+  }
+
+  .pricing-card.featured::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(to right, var(--gold), var(--gold-dim));
+  }
+
+  .pricing-tier {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .pricing-price {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .pricing-price span {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+
+  .pricing-period {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    margin-bottom: 24px;
+  }
+
+  .pricing-features {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 28px;
+    text-align: left;
+    font-size: 12px;
+    color: var(--text-dim);
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: 0.03em;
+  }
+
+  .pf-check::before { content: '✓  '; color: var(--green); }
+  .pf-lock::before { content: '–  '; color: var(--text-muted); opacity: 0.5; }
+
+  .btn-full {
+    display: block;
+    width: 100%;
+    text-align: center;
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 40px 48px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .footer-note {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 24px;
+    list-style: none;
+  }
+
+  .footer-links a {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-decoration: none;
+    letter-spacing: 0.06em;
+    transition: color 0.2s;
+  }
+
+  .footer-links a:hover { color: var(--text-dim); }
+
+  /* UTILITIES */
+  .divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border), transparent);
+    margin: 0 48px;
+  }
+
+  .text-gold { color: var(--gold); }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .fade-up { animation: fadeUp 0.7s ease both; }
+  .delay-1 { animation-delay: 0.1s; }
+  .delay-2 { animation-delay: 0.2s; }
+  .delay-3 { animation-delay: 0.3s; }
+  .delay-4 { animation-delay: 0.4s; }
+  .delay-5 { animation-delay: 0.55s; }
+
+  /* RESPONSIVE */
+  @media (max-width: 1024px) {
+    .hero { grid-template-columns: 1fr; padding: 100px 24px 64px; gap: 48px; }
+    .value-grid { grid-template-columns: 1fr 1fr; }
+    .feature-matrix { grid-template-columns: 1fr; }
+    nav { padding: 20px 24px; }
+    .nav-links { display: none; }
+    .section { padding: 72px 24px; }
+    .conversion-section { padding: 80px 24px; }
+    footer { padding: 32px 24px; flex-direction: column; gap: 20px; text-align: center; }
+    .divider { margin: 0 24px; }
+    .table-toolbar { overflow-x: auto; }
+  }
+
+  @media (max-width: 640px) {
+    .value-grid { grid-template-columns: 1fr; }
+    .hero-stats { gap: 20px; flex-wrap: wrap; }
+    .pricing-card-group { flex-direction: column; }
+    .hero {
+      grid-template-columns: 1fr;
+      padding: 130px 20px 60px;
+      min-height: auto;
+      overflow: hidden;
+    }
+    .hero-left { max-width: 100%; overflow: hidden; }
+    .hero-title { font-size: clamp(26px, 8vw, 36px); line-height: 1.1; word-break: break-word; }
+    .hero-sub { font-size: 15px; max-width: 100%; }
+    .hero-actions { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .btn-primary { width: 100%; text-align: center; }
+    .hero-eyebrow { display: none; }
+    .hero-right { display: none; }
+    .hero-stats { margin-top: 40px; padding-top: 24px; }
+    .stat-num { font-size: 22px; }
+    .section { padding: 56px 20px; }
+    .section-title { font-size: clamp(22px, 6vw, 32px); }
+    .conversion-title { font-size: clamp(24px, 7vw, 36px); }
+    .conversion-section { padding: 64px 20px; }
+    footer { padding: 28px 20px; }
+    .divider { margin: 0 20px; }
+    /* Methodology section mobile */
+    #methodology > div { padding: 0 !important; }
+    #methodology [style*="grid-template-columns: auto 1fr 1fr"] { grid-template-columns: auto 1fr !important; }
+    #methodology [style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; }
+    #methodology [style*="grid-template-columns: repeat(3,1fr)"] { grid-template-columns: 1fr !important; }
+    /* Value blocks */
+    .value-block { padding: 24px 20px; }
+    /* Feature matrix */
+    .feature-col { padding: 24px 20px; }
+  }
+
+  /* LANG TOGGLE — inside nav */
+  .lang-bar {
+    display: flex; gap: 2px;
+    border: 1px solid var(--border-bright);
+    overflow: hidden;
+  }
+  .lang-bar button {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px; font-weight: 500;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 6px 12px; cursor: pointer;
+    border: none; transition: all 0.2s;
+    background: transparent; color: var(--text-muted);
+  }
+  .lang-bar .lb-en { background: var(--gold); color: var(--obsidian); }
+  .lang-bar .lb-es { background: transparent; color: var(--gold); }
+  .lang-bar .lb-en.inactive { background: transparent; color: var(--text-muted); }
+  .lang-bar .lb-es.active { background: var(--gold); color: var(--obsidian); }
+  @media (max-width: 640px) {
+    .lang-bar button { padding: 5px 10px; font-size: 9px; }
+  }
+
+  /* SCROLL REVEAL — visible by default, animated only when JS kicks in */
+  .reveal { opacity: 1; transform: translateY(0); transition: opacity 0.6s ease, transform 0.6s ease; }
+  .js-loaded .reveal { opacity: 0; transform: translateY(20px); }
+  .js-loaded .reveal.visible { opacity: 1; transform: translateY(0); }
+</style>
+
+  <script defer src="https://cloud.umami.is/script.js" data-website-id="47383155-2296-49a2-a5ff-8649cc160824"></script>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="logo-mark"></div>
+    <span class="logo-text">Miner<span>Alpha</span> Lab</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#portfolio-engine"><span class="t-en">Portfolio Engine</span><span class="t-es" style="display:none">Motor de Cartera</span></a></li>
+    <li><a href="#rankings"><span class="t-en">Rankings</span><span class="t-es" style="display:none">Rankings</span></a></li>
+    <li><a href="#methodology"><span class="t-en">Methodology</span><span class="t-es" style="display:none">Metodología</span></a></li>
+    <li><a href="#pricing"><span class="t-en">Pricing</span><span class="t-es" style="display:none">Precio</span></a></li>
+  </ul>
+  <div class="nav-actions">
+    <div class="lang-bar">
+      <button class="lb-en" id="lb-en" onclick="setLang('en')">EN</button>
+      <button class="lb-es" id="lb-es" onclick="setLang('es')">ES</button>
+    </div>
+    <a href="https://mineralphalab.streamlit.app/" class="nav-free"><span class="t-en">Access Free</span><span class="t-es" style="display:none">Acceso Gratis</span></a>
+    <a href="https://mineralphalab.streamlit.app/" class="nav-cta"><span class="t-en">Access PRO</span><span class="t-es" style="display:none">Acceso PRO</span></a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-eyebrow fade-up">
+      <div class="eyebrow-line"></div>
+      <span class="eyebrow-text"><span class="t-en">Portfolio Engine · 4-Year Public Track Record</span><span class="t-es" style="display:none">Motor de Cartera · Historial Público de 4 Años</span></span>
+    </div>
+    <h1 class="hero-title fade-up delay-1">
+      <span class="t-en">Not the highest return.<br>The <em>highest quality</em> return.</span><span class="t-es" style="display:none">No la mayor rentabilidad.<br>La rentabilidad de <em>mayor calidad.</em></span>
+    </h1>
+    <p class="hero-sub fade-up delay-2" style="font-size:15px;">
+      <span class="t-en">Track leadership before it becomes consensus. 1,300+ resource equities ranked weekly. Persistent leadership, early rotation, risk-adjusted results.</span><span class="t-es" style="display:none">Detecta el liderazgo antes de que sea consenso. Más de 1.300 acciones de recursos naturales analizadas cada semana. Liderazgo persistente, rotación temprana, resultados ajustados por riesgo.</span>
+    </p>
+    <div class="hero-actions fade-up delay-3">
+      <a href="#portfolio-engine" class="btn-primary"><span class="t-en">View Portfolio Engine →</span><span class="t-es" style="display:none">Ver Motor de Cartera →</span></a>
+      <a href="#portfolio-engine" class="btn-ghost"><span class="t-en">See Public Track Record</span><span class="t-es" style="display:none">Ver Historial Público</span></a>
+    </div>
+    <div class="hero-stats fade-up delay-4">
+      <div class="stat-item">
+        <span class="stat-num counter" data-target="1300" data-suffix="+">0</span>
+        <span class="stat-label"><span class="t-en">Assets Tracked</span><span class="t-es" style="display:none">Activos Rastreados</span></span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">4yr</span>
+        <span class="stat-label"><span class="t-en">Track Record</span><span class="t-es" style="display:none">Historial del Sistema</span></span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num counter" data-target="10" data-suffix="">0</span>
+        <span class="stat-label"><span class="t-en">Sectors Covered</span><span class="t-es" style="display:none">Sectores Cubiertos</span></span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">1.86</span>
+        <span class="stat-label"><span class="t-en">Sharpe Ratio</span><span class="t-es" style="display:none">Ratio Sharpe</span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-right fade-up delay-5">
+    <div class="hero-widget" style="background:var(--surface);border:1px solid var(--border);position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(to right,var(--gold),var(--gold-dim),transparent);"></div>
+      <div class="widget-header">
+        <span class="widget-title"><span class="t-en">Miner Alpha Combined · Performance</span><span class="t-es" style="display:none">Miner Alpha Combined · Rendimiento</span></span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:0.08em;"><span class="t-en">4-Year Public Record</span><span class="t-es" style="display:none">Historial Público 4 Años</span></span>
+      </div>
+
+      <!-- Main KPI: 100→460 -->
+      <div style="padding:28px 24px 20px;border-bottom:1px solid var(--border);text-align:center;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:10px;"><span class="t-en">Portfolio Growth (Start = 100)</span><span class="t-es" style="display:none">Crecimiento de Cartera (Base = 100)</span></div>
+        <div style="font-family:'Playfair Display',serif;font-size:52px;color:var(--gold);line-height:1;letter-spacing:-0.02em;">100 <span style="font-size:28px;color:var(--text-muted);">→</span> <span style="color:var(--gold-bright);">460+</span></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:0.1em;margin-top:8px;">Apr 2022 → Apr 2026</div>
+      </div>
+
+      <!-- KPI grid -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);">
+        <div style="background:var(--charcoal);padding:18px 20px;">
+          <div style="font-family:'Playfair Display',serif;font-size:26px;color:var(--gold);line-height:1;margin-bottom:4px;">1.86</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;"><span class="t-en">Sharpe Ratio</span><span class="t-es" style="display:none">Ratio Sharpe</span></div>
+        </div>
+        <div style="background:var(--charcoal);padding:18px 20px;">
+          <div style="font-family:'Playfair Display',serif;font-size:26px;color:#c94c4c;line-height:1;margin-bottom:4px;">-13.8%</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;"><span class="t-en">Max Drawdown</span><span class="t-es" style="display:none">DD Máximo</span></div>
+        </div>
+        <div style="background:var(--charcoal);padding:14px 20px;">
+          <div style="font-family:'Playfair Display',serif;font-size:22px;color:#c94c4c;line-height:1;margin-bottom:3px;">-6.0%</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;"><span class="t-en">2022 Bear</span><span class="t-es" style="display:none">2022 Bajista</span></div>
+        </div>
+        <div style="background:var(--charcoal);padding:14px 20px;">
+          <div style="font-family:'Playfair Display',serif;font-size:22px;color:#4caf7a;line-height:1;margin-bottom:3px;">+117.7%</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;"><span class="t-en">2025 Bull</span><span class="t-es" style="display:none">2025 Alcista</span></div>
+        </div>
+      </div>
+
+      <!-- Footer note + CTA -->
+      <div class="widget-footer" style="justify-content:space-between;">
+        <span class="widget-footer-note"><span class="t-en">Risk-adjusted winner · Public backtest</span><span class="t-es" style="display:none">Ganador ajustado por riesgo · Backtest público</span></span>
+        <a href="#portfolio-engine" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold);text-decoration:none;letter-spacing:0.08em;"><span class="t-en">Full record →</span><span class="t-es" style="display:none">Historial completo →</span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- PUBLIC RESEARCH NOTES — credibility bar, above the fold -->
+<div style="background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:18px 48px;">
+  <div style="max-width:960px;margin:0 auto;display:flex;align-items:center;gap:24px;flex-wrap:wrap;justify-content:space-between;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:0.12em;text-transform:uppercase;">
+      <span class="t-en">Public Research Notes</span><span class="t-es" style="display:none">Notas Públicas de Investigación</span>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+      <a href="#portfolio-engine" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);text-decoration:none;letter-spacing:0.08em;border:1px solid var(--gold-dim);padding:6px 14px;transition:all 0.2s;" onmouseover="this.style.background='rgba(184,191,200,0.1)'" onmouseout="this.style.background='transparent'">
+        <span class="t-en">Portfolio Methodology →</span><span class="t-es" style="display:none">Metodología de Cartera →</span>
+      </a>
+      <a href="#portfolio-engine" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);text-decoration:none;letter-spacing:0.08em;border:1px solid var(--gold-dim);padding:6px 14px;transition:all 0.2s;" onmouseover="this.style.background='rgba(184,191,200,0.1)'" onmouseout="this.style.background='transparent'">
+        <span class="t-en">Public Backtest White Paper →</span><span class="t-es" style="display:none">Informe Público de Backtest →</span>
+      </a>
+      <a href="#portfolio-engine" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);text-decoration:none;letter-spacing:0.08em;border:1px solid var(--gold-dim);padding:6px 14px;transition:all 0.2s;" onmouseover="this.style.background='rgba(184,191,200,0.1)'" onmouseout="this.style.background='transparent'">
+        <span class="t-en">4-Year Track Record →</span><span class="t-es" style="display:none">Historial de 4 Años →</span>
+      </a>
+    </div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:0.06em;">
+      <span class="t-en">Public version. Operating rules omitted.</span><span class="t-es" style="display:none">Versión pública. Reglas operativas omitidas.</span>
+    </div>
+  </div>
+</div>
+
+<!-- HOW TO USE — CRITICAL SECTION -->
+<section class="section">
+  <div class="section-header reveal">
+    <div class="section-label"><span class="t-en">How It Works</span><span class="t-es" style="display:none">Cómo Funciona</span></div>
+    <h2 class="section-title">
+      <span class="t-en">From leadership data<br>to <em>portfolio decisions.</em></span><span class="t-es" style="display:none">De los datos de liderazgo<br>a <em>decisiones de cartera.</em></span>
+    </h2>
+    <p class="section-sub">
+      <span class="t-en">Miner Alpha Lab turns weekly leadership rankings into a structured research process: identify emerging leaders, confirm persistent leadership, and monitor deterioration.</span><span class="t-es" style="display:none">Miner Alpha Lab convierte los rankings semanales de liderazgo en un proceso de investigación estructurado: detectar líderes tempranos, confirmar liderazgo persistente y vigilar el deterioro.</span>
+    </p>
+  </div>
+
+  <div class="value-grid reveal" style="grid-template-columns:repeat(3,1fr);">
+    <div class="value-block">
+      <span class="block-num">01</span>
+      <h3 class="block-title"><span class="t-en">Detect Early Leadership</span><span class="t-es" style="display:none">Detecta liderazgo temprano</span></h3>
+      <p class="block-text"><span class="t-en">Acceleration in the rankings before the market notices. Systematic, not intuitive.</span><span class="t-es" style="display:none">Aceleración en el ranking antes de que el mercado lo perciba. Sistemático, no intuitivo.</span></p>
+    </div>
+    <div class="value-block">
+      <span class="block-num">02</span>
+      <h3 class="block-title"><span class="t-en">Confirm Persistent Leaders</span><span class="t-es" style="display:none">Confirma líderes persistentes</span></h3>
+      <p class="block-text"><span class="t-en">Persistence across weeks is the signal. Not a spike. Not a narrative.</span><span class="t-es" style="display:none">La persistencia durante semanas es la señal. No un pico. No una narrativa.</span></p>
+    </div>
+    <div class="value-block">
+      <span class="block-num">03</span>
+      <h3 class="block-title"><span class="t-en">Monitor Exit Risk</span><span class="t-es" style="display:none">Vigila el riesgo de deterioro</span></h3>
+      <p class="block-text"><span class="t-en">Deterioration appears in the data before price confirms it. Exit discipline is part of the edge.</span><span class="t-es" style="display:none">El deterioro aparece en los datos antes que en el precio. La disciplina de salida es parte de la ventaja.</span></p>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:40px;" class="reveal">
+    <a href="https://mineralphalab.streamlit.app/" class="btn-primary">
+      <span class="t-en">Access the Decision Engine</span><span class="t-es" style="display:none">Accede al motor de decisión</span>
+    </a>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TICKER TAPE -->
+<div class="ticker-tape">
+  <div class="ticker-tape-inner">
+    <span class="tape-item"><span class="tape-ticker">GOLD</span><span class="tape-val">$2,342</span><span class="tape-chg-up">+0.8%</span></span>
+    <span class="tape-item"><span class="tape-ticker">SILVER</span><span class="tape-val">$27.14</span><span class="tape-chg-up">+1.2%</span></span>
+    <span class="tape-item"><span class="tape-ticker">COPPER</span><span class="tape-val">$4.18/lb</span><span class="tape-chg-dn">−0.4%</span></span>
+    <span class="tape-item"><span class="tape-ticker">GDX</span><span class="tape-val">$34.82</span><span class="tape-chg-up">+1.6%</span></span>
+    <span class="tape-item"><span class="tape-ticker">GDXJ</span><span class="tape-val">$41.07</span><span class="tape-chg-up">+2.1%</span></span>
+    <span class="tape-item"><span class="tape-ticker">SIL</span><span class="tape-val">$29.44</span><span class="tape-chg-up">+0.9%</span></span>
+    <span class="tape-item"><span class="tape-ticker">COPX</span><span class="tape-val">$48.22</span><span class="tape-chg-dn">−0.2%</span></span>
+    <span class="tape-item"><span class="tape-ticker">AGI</span><span class="tape-val">$18.73</span><span class="tape-chg-up">+3.4%</span></span>
+    <span class="tape-item"><span class="tape-ticker">WPM</span><span class="tape-val">$52.11</span><span class="tape-chg-up">+1.8%</span></span>
+    <span class="tape-item"><span class="tape-ticker">KGC</span><span class="tape-val">$7.44</span><span class="tape-chg-up">+2.7%</span></span>
+    <!-- Duplicate for seamless loop -->
+    <span class="tape-item"><span class="tape-ticker">GOLD</span><span class="tape-val">$2,342</span><span class="tape-chg-up">+0.8%</span></span>
+    <span class="tape-item"><span class="tape-ticker">SILVER</span><span class="tape-val">$27.14</span><span class="tape-chg-up">+1.2%</span></span>
+    <span class="tape-item"><span class="tape-ticker">COPPER</span><span class="tape-val">$4.18/lb</span><span class="tape-chg-dn">−0.4%</span></span>
+    <span class="tape-item"><span class="tape-ticker">GDX</span><span class="tape-val">$34.82</span><span class="tape-chg-up">+1.6%</span></span>
+    <span class="tape-item"><span class="tape-ticker">GDXJ</span><span class="tape-val">$41.07</span><span class="tape-chg-up">+2.1%</span></span>
+    <span class="tape-item"><span class="tape-ticker">SIL</span><span class="tape-val">$29.44</span><span class="tape-chg-up">+0.9%</span></span>
+    <span class="tape-item"><span class="tape-ticker">COPX</span><span class="tape-val">$48.22</span><span class="tape-chg-dn">−0.2%</span></span>
+    <span class="tape-item"><span class="tape-ticker">AGI</span><span class="tape-val">$18.73</span><span class="tape-chg-up">+3.4%</span></span>
+    <span class="tape-item"><span class="tape-ticker">WPM</span><span class="tape-val">$52.11</span><span class="tape-chg-up">+1.8%</span></span>
+    <span class="tape-item"><span class="tape-ticker">KGC</span><span class="tape-val">$7.44</span><span class="tape-chg-up">+2.7%</span></span>
+  </div>
+</div>
+
+<!-- RANKINGS DEMO SECTION -->
+<section class="section" id="rankings">
+  <div class="section-header reveal">
+    <div class="section-label"><span class="t-en">Weekly Rankings</span><span class="t-es" style="display:none">Rankings Semanales</span></div>
+    <h2 class="section-title"><span class="t-en">The rankings are the input.<br><em>The Portfolio Engine is the decision layer.</em></span><span class="t-es" style="display:none">Los rankings son la entrada.<br><em>El Motor de Cartera es la capa de decisión.</em></span></h2>
+    <p class="section-sub"><span class="t-en">Updated weekly across 1,300+ assets. The free view shows you the direction of capital. PRO shows the full structure — ranked, filtered, and portfolio-ready.</span><span class="t-es" style="display:none">Actualizado semanalmente en más de 1.300 activos. La vista gratuita muestra la dirección del capital. PRO muestra la estructura completa — rankeada, filtrada y lista para la cartera.</span></p>
+  </div>
+
+  <div class="table-wrapper reveal" style="max-width:640px;">
+
+    <table class="rankings-table">
+      <thead>
+        <tr>
+          <th style="width:64px">Rank</th>
+          <th><span class="t-en">Asset</span><span class="t-es" style="display:none">Activo</span></th>
+          <th><span class="t-en">Score</span><span class="t-es" style="display:none">Puntuación</span></th>
+          <th><div class="col-locked">🔒 <span class="t-en">Regime</span><span class="t-es" style="display:none">Régimen</span></div></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="rank-num rank-top">#1</span></td>
+          <td><span class="asset-name">Alamos Gold</span><span class="asset-ticker-tag">AGI</span></td>
+          <td><div class="score-cell"><div class="score-track"><div class="score-fill" style="width:92%"></div></div><span class="score-val">92</span></div></td>
+          <td style="color:var(--green);filter:blur(4px);user-select:none">Leader</td>
+        </tr>
+        <tr>
+          <td><span class="rank-num rank-top">#2</span></td>
+          <td><span class="asset-name">Wheaton Precious</span><span class="asset-ticker-tag">WPM</span></td>
+          <td><div class="score-cell"><div class="score-track"><div class="score-fill" style="width:89%"></div></div><span class="score-val">89</span></div></td>
+          <td style="filter:blur(4px);user-select:none">Leader</td>
+        </tr>
+        <tr>
+          <td><span class="rank-num">#3</span></td>
+          <td><span class="asset-name">Kinross Gold</span><span class="asset-ticker-tag">KGC</span></td>
+          <td><div class="score-cell"><div class="score-track"><div class="score-fill" style="width:87%"></div></div><span class="score-val">87</span></div></td>
+          <td style="filter:blur(4px);user-select:none">Leader</td>
+        </tr>
+        <tr style="opacity:0.72;">
+          <td><span class="rank-num">#4</span></td>
+          <td><span class="asset-name">Barrick Gold</span><span class="asset-ticker-tag">GOLD</span></td>
+          <td><div class="score-cell"><div class="score-track"><div class="score-fill" style="width:86%"></div></div><span class="score-val">86</span></div></td>
+          <td style="filter:blur(4px);user-select:none">Strong</td>
+        </tr>
+        <tr style="opacity:0.48;">
+          <td><span class="rank-num">#5</span></td>
+          <td><span class="asset-name">Newmont Corp</span><span class="asset-ticker-tag">NEM</span></td>
+          <td><div class="score-cell"><div class="score-track"><div class="score-fill" style="width:83%"></div></div><span class="score-val">83</span></div></td>
+          <td style="filter:blur(4px);user-select:none">Strong</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- UPGRADE OVERLAY -->
+    <div class="table-upgrade-overlay">
+      <div class="upgrade-callout">
+        <p class="upgrade-callout-eyebrow"><span class="t-en">1,295+ assets · Full dataset in PRO</span><span class="t-es" style="display:none">1.295+ activos · Dataset completo en PRO</span></p>
+        <h3 class="upgrade-callout-text"><span class="t-en">The input is free.<br><em>The engine is PRO.</em></span><span class="t-es" style="display:none">La entrada es gratuita.<br><em>El motor es PRO.</em></span></h3>
+        <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+          <a href="https://mineralphalab.streamlit.app/" class="btn-primary"><span class="t-en">Access Portfolio Engine →</span><span class="t-es" style="display:none">Acceder al Motor de Cartera →</span></a>
+          <a href="https://mineralphalab.streamlit.app/" class="btn-ghost"><span class="t-en">See what PRO includes</span><span class="t-es" style="display:none">Ver qué incluye PRO</span></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- VALUE BLOCKS -->
+<section class="section" id="methodology">
+  <div class="section-header reveal">
+    <div class="section-label"><span class="t-en">Why It Works</span><span class="t-es" style="display:none">Por Qué Funciona</span></div>
+    <h2 class="section-title"><span class="t-en">Built on <em>leadership</em><br>persistence.</span><span class="t-es" style="display:none">Construido sobre <em>persistencia</em><br>del liderazgo.</span></h2>
+    <p class="section-sub"><span class="t-en">The edge is not prediction. It is positioning. Leadership tends to appear in the data before it appears in the narrative.</span><span class="t-es" style="display:none">La ventaja no está en predecir. Está en posicionarse. El liderazgo suele aparecer en los datos antes que en la narrativa del mercado.</span></p>
+  </div>
+
+  <div class="value-grid" style="grid-template-columns:repeat(3,1fr);">
+    <div class="value-block reveal">
+      <span class="block-num">01</span>
+      <span class="block-icon">⚡</span>
+      <h3 class="block-title"><span class="t-en">Leadership Persistence</span><span class="t-es" style="display:none">Persistencia del liderazgo</span></h3>
+      <p class="block-text"><span class="t-en">Assets that sustain top rankings over multiple weeks carry structural advantage. The system identifies and holds persistent leaders — not momentum spikes.</span><span class="t-es" style="display:none">Los activos que sostienen posiciones de liderazgo durante varias semanas tienen ventaja estructural. El sistema identifica y mantiene líderes persistentes, no picos de momentum.</span></p>
+      <span class="block-tag"><span class="t-en">Systematic · Weekly</span><span class="t-es" style="display:none">Sistemático · Semanal</span></span>
+    </div>
+    <div class="value-block reveal">
+      <span class="block-num">02</span>
+      <span class="block-icon">🔁</span>
+      <h3 class="block-title"><span class="t-en">Early Acceleration</span><span class="t-es" style="display:none">Aceleración temprana</span></h3>
+      <p class="block-text"><span class="t-en">Capital rotates into names before price confirms. The ranking structure reveals acceleration patterns that precede broader recognition.</span><span class="t-es" style="display:none">El capital rota hacia nombres antes de que el precio lo confirme. La estructura de rankings revela patrones de aceleración que preceden al reconocimiento generalizado.</span></p>
+      <span class="block-tag"><span class="t-en">Early Leaders Model</span><span class="t-es" style="display:none">Modelo de Líderes Tempranos</span></span>
+    </div>
+    <div class="value-block reveal">
+      <span class="block-num">03</span>
+      <span class="block-icon">📐</span>
+      <h3 class="block-title"><span class="t-en">Cycle Transitions</span><span class="t-es" style="display:none">Transiciones de ciclo</span></h3>
+      <p class="block-text"><span class="t-en">Bear, transition, expansion, bull — each phase tested with real results across a full 4-year cycle. The methodology adapts to structure, not prediction.</span><span class="t-es" style="display:none">Bajista, transición, expansión, alcista — cada fase testada con resultados reales a lo largo de un ciclo completo de 4 años. La metodología se adapta a la estructura, no a la predicción.</span></p>
+      <span class="block-tag"><span class="t-en">Full Cycle Tested</span><span class="t-es" style="display:none">Ciclo Completo Testado</span></span>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FEATURE MATRIX (Free vs PRO) -->
+<section class="section">
+  <div class="section-header reveal">
+    <div class="section-label"><span class="t-en">Free vs PRO</span><span class="t-es" style="display:none">Gratis vs PRO</span></div>
+    <h2 class="section-title"><span class="t-en">Free shows direction.<br><em>PRO gives you positioning.</em></span><span class="t-es" style="display:none">Gratis muestra la dirección.<br><em>PRO te da el posicionamiento.</em></span></h2>
+  </div>
+
+  <div class="feature-matrix reveal">
+    <div class="feature-col">
+      <div class="feature-col-header">
+        <span class="plan-badge free">Free</span>
+        <h3 class="plan-name"><span class="t-en">Guest Access</span><span class="t-es" style="display:none">Acceso Gratuito</span></h3>
+        <p class="plan-desc"><span class="t-en">Enough to see the direction. Not enough to act on it.</span><span class="t-es" style="display:none">Suficiente para ver la dirección. No suficiente para actuar sobre ella.</span></p>
+      </div>
+      <ul class="feature-list">
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span><span class="t-en">Top 10 weekly rankings per family (name + score)</span><span class="t-es" style="display:none">Top 10 rankings semanales por familia (nombre + puntuación)</span></li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span><span class="t-en">Sector overview across 4 commodity categories</span><span class="t-es" style="display:none">Visión general del sector en 4 categorías de materias primas</span></li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span><span class="t-en">Market-level ticker tape with current week signals</span><span class="t-es" style="display:none">Ticker tape de mercado con las señales de la semana actual</span></li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span><span class="t-en">Weekly Intelligence Briefing headline</span><span class="t-es" style="display:none">Titular del Intelligence Briefing semanal</span></li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span><span class="t-en">Family Performance summary (1W returns)</span><span class="t-es" style="display:none">Resumen de rendimiento por familia (retornos 1W)</span></li>
+        <li class="feature-item"><span class="fi-icon fi-lock">—</span><span class="fi-locked-text t-en">Full 1,300+ asset rankings</span><span class="fi-locked-text t-es" style="display:none">Rankings completos de más de 1.300 activos</span></li>
+        <li class="feature-item"><span class="fi-icon fi-lock">—</span><span class="fi-locked-text t-en">RS Rank & Volume Signal columns</span><span class="fi-locked-text t-es" style="display:none">Columnas de RS Rank y señal de volumen</span></li>
+        <li class="feature-item"><span class="fi-icon fi-lock">—</span><span class="fi-locked-text t-en">Rank evolution history per asset</span><span class="fi-locked-text t-es" style="display:none">Historial de evolución de ranking por activo</span></li>
+        <li class="feature-item"><span class="fi-icon fi-lock">—</span><span class="fi-locked-text t-en">Sector & market-cap filters</span><span class="fi-locked-text t-es" style="display:none">Filtros por sector y capitalización</span></li>
+        <li class="feature-item"><span class="fi-icon fi-lock">—</span><span class="fi-locked-text t-en">Regime classification (Leader / Strong / Weak / Laggard)</span><span class="fi-locked-text t-es" style="display:none">Clasificación de régimen (Leader / Strong / Weak / Laggard)</span></li>
+        <li class="feature-item"><span class="fi-icon fi-lock">—</span><span class="fi-locked-text t-en">Early Leader detection</span><span class="fi-locked-text t-es" style="display:none">Detección de Early Leaders</span></li>
+        <li class="feature-item"><span class="fi-icon fi-lock">—</span><span class="fi-locked-text t-en">Capital rotation signals</span><span class="fi-locked-text t-es" style="display:none">Señales de rotación de capital</span></li>
+        <li class="feature-item"><span class="fi-icon fi-lock">—</span><span class="fi-locked-text t-en">Watchlists & alerts</span><span class="fi-locked-text t-es" style="display:none">Watchlists y alertas</span></li>
+        <li class="feature-item"><span class="fi-icon fi-lock">—</span><span class="fi-locked-text t-en">Data export</span><span class="fi-locked-text t-es" style="display:none">Exportación de datos</span></li>
+      </ul>
+    </div>
+    <div class="feature-col">
+      <div class="feature-col-header">
+        <span class="plan-badge pro">PRO</span>
+        <h3 class="plan-name"><span class="t-en">Full Access</span><span class="t-es" style="display:none">Acceso Completo</span></h3>
+        <p class="plan-desc"><span class="t-en">The complete dataset. Every signal. Every asset. Every week.</span><span class="t-es" style="display:none">El dataset completo. Cada señal. Cada activo. Cada semana.</span></p>
+      </div>
+      <ul class="feature-list">
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span><span class="t-en">Full 1,300+ asset rankings across 10 commodity families</span><span class="t-es" style="display:none">Rankings completos de más de 1.300 activos en 10 familias de materias primas</span></li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span><span class="t-en">See the full market structure — not just the top 10</span><span class="t-es" style="display:none">Ve la estructura completa del mercado — no solo el top 10</span></li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span><span class="t-en">Identify leadership before it becomes obvious</span><span class="t-es" style="display:none">Identifica el liderazgo antes de que se vuelva obvio</span></li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span><span class="t-en">Track capital rotation across gold, silver, copper, uranium, lithium and juniors</span><span class="t-es" style="display:none">Rastrea la rotación de capital en oro, plata, cobre, uranio, litio y juniors</span></li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span><span class="t-en">Rank every asset by real relative strength and momentum</span><span class="t-es" style="display:none">Clasifica cada activo por fuerza relativa y momentum real</span></li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span><span class="t-en">Regime classification per asset — Leader, Strong, Weak or Laggard</span><span class="t-es" style="display:none">Clasificación de régimen por activo — Leader, Strong, Weak o Laggard</span></li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span><span class="t-en">Monitor how rankings evolve over time (90+ weekly snapshots)</span><span class="t-es" style="display:none">Monitoriza cómo evolucionan los rankings en el tiempo (90+ snapshots semanales)</span></li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span><span class="t-en">Early Leader detection — spots emerging names before they run</span><span class="t-es" style="display:none">Detección de Early Leaders — identifica nombres emergentes antes de que corran</span></li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span><span class="t-en">Filter the entire universe by family, regime, size and signal type</span><span class="t-es" style="display:none">Filtra todo el universo por familia, régimen, tamaño y tipo de señal</span></li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span><span class="t-en">Receive alerts when an asset changes regime</span><span class="t-es" style="display:none">Recibe alertas cuando un activo cambia de régimen</span></li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span><span class="t-en">Build and track your own watchlists</span><span class="t-es" style="display:none">Construye y rastrea tus propias watchlists</span></li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span><span class="t-en">Weekly Intelligence Briefing — full breakdown of where capital is moving</span><span class="t-es" style="display:none">Intelligence Briefing semanal — análisis completo de hacia dónde se mueve el capital</span></li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span><span class="t-en">Family Performance across 1W / 1M / 3M / 6M / 1Y</span><span class="t-es" style="display:none">Rendimiento por familia en 1W / 1M / 3M / 6M / 1Y</span></li>
+        <li class="feature-item"><span class="fi-icon fi-check">✓</span><span class="t-en">Export data for deeper analysis</span><span class="t-es" style="display:none">Exporta datos para análisis más profundo</span></li>
+        <li class="feature-item" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-bright);">
+          <span class="fi-icon fi-check" style="color:var(--gold);">✓</span>
+          <span style="color:var(--gold);font-weight:500;" class="t-en">Portfolio Engine — systematic signals every week</span>
+          <span style="color:var(--gold);font-weight:500;" class="t-es" style="display:none">Motor de Cartera — señales sistemáticas cada semana</span>
+        </li>
+        <li class="feature-item"><span class="fi-icon fi-check" style="color:var(--gold-dim);">✓</span><span class="t-en" style="color:var(--text-dim);">Live portfolio composition — Sleeve A + Sleeve B positions</span><span class="t-es" style="display:none;color:var(--text-dim);">Composición del portafolio en tiempo real — posiciones Sleeve A + Sleeve B</span></li>
+        <li class="feature-item"><span class="fi-icon fi-check" style="color:var(--gold-dim);">✓</span><span class="t-en" style="color:var(--text-dim);">Leadership lifecycle tracking — Early, Confirmed, Core, Exit Risk</span><span class="t-es" style="display:none;color:var(--text-dim);">Ciclo de vida del liderazgo — Early, Confirmed, Core, Exit Risk</span></li>
+        <li class="feature-item"><span class="fi-icon fi-check" style="color:var(--gold-dim);">✓</span><span class="t-en" style="color:var(--text-dim);">4-year verified track record — Sharpe 1.86, CAGR 44.7%</span><span class="t-es" style="display:none;color:var(--text-dim);">Historial verificado de 4 años — Sharpe 1,86, CAGR 44,7%</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PORTFOLIO ENGINE SECTION -->
+<section class="section" id="portfolio-engine" style="background:var(--charcoal);">
+  <div class="section-header reveal" style="text-align:center;max-width:680px;margin:0 auto 56px;">
+    <div class="section-label" style="justify-content:center;"><span class="t-en">PRO Exclusive</span><span class="t-es" style="display:none">Exclusivo PRO</span></div>
+    <h2 class="section-title"><span class="t-en">The Portfolio Engine.<br><em>Leadership → positions.</em></span><span class="t-es" style="display:none">El Motor de Cartera.<br><em>Liderazgo → posiciones.</em></span></h2>
+    <p class="section-sub" style="max-width:100%;"><span class="t-en">A rules-based system that turns weekly rankings into a live portfolio. No discretion. No prediction. Structural leadership persistence — systematically tracked.</span><span class="t-es" style="display:none">Un sistema basado en reglas que convierte rankings semanales en un portafolio en vivo. Sin discrecionalidad. Sin predicción. Persistencia estructural del liderazgo — rastreada sistemáticamente.</span></p>
+  </div>
+
+  <!-- Backtest KPIs -->
+  <div class="reveal" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);max-width:860px;margin:0 auto 56px;">
+    <div style="background:var(--surface);padding:24px 20px;text-align:center;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(to right,transparent,var(--gold),transparent);"></div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:10px;"><span class="t-en">Sharpe Ratio</span><span class="t-es" style="display:none">Ratio Sharpe</span></div>
+      <div style="font-family:'Playfair Display',serif;font-size:36px;color:var(--gold-bright);line-height:1;">1.86</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);margin-top:6px;">4yr backtest</div>
+    </div>
+    <div style="background:var(--surface);padding:24px 20px;text-align:center;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(to right,transparent,var(--gold),transparent);"></div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:10px;">CAGR</div>
+      <div style="font-family:'Playfair Display',serif;font-size:36px;color:var(--green);line-height:1;">44.7%</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);margin-top:6px;">annualised</div>
+    </div>
+    <div style="background:var(--surface);padding:24px 20px;text-align:center;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(to right,transparent,var(--gold),transparent);"></div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:10px;"><span class="t-en">Max Drawdown</span><span class="t-es" style="display:none">Máx. Drawdown</span></div>
+      <div style="font-family:'Playfair Display',serif;font-size:36px;color:var(--red);line-height:1;">-13.8%</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);margin-top:6px;">peak-to-trough</div>
+    </div>
+    <div style="background:var(--surface);padding:24px 20px;text-align:center;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(to right,transparent,var(--gold),transparent);"></div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:10px;"><span class="t-en">Growth</span><span class="t-es" style="display:none">Crecimiento</span></div>
+      <div style="font-family:'Playfair Display',serif;font-size:36px;color:var(--gold-bright);line-height:1;">460+</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);margin-top:6px;">100 → 460+ (4yr)</div>
+    </div>
+  </div>
+
+  <!-- Two sleeves + Lifecycle -->
+  <div class="reveal" style="display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:860px;margin:0 auto 40px;">
+
+    <!-- Sleeve A -->
+    <div style="background:var(--surface);border:1px solid var(--border);padding:28px 28px 24px;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;bottom:0;width:2px;background:var(--gold);"></div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--gold);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:12px;">Sleeve A · ~42%</div>
+      <h3 style="font-family:'Playfair Display',serif;font-size:20px;font-weight:400;color:var(--text);margin-bottom:8px;"><span class="t-en">Confirmed Leaders</span><span class="t-es" style="display:none">Líderes Confirmados</span></h3>
+      <p style="font-family:'Inter',sans-serif;font-size:13px;color:var(--text-dim);line-height:1.7;margin-bottom:16px;"><span class="t-en">Stocks in the top 20 of their universe with persistent ranking strength over 3+ weeks. High-conviction, low-turnover.</span><span class="t-es" style="display:none">Valores en el top 20 de su universo con fortaleza persistente en el ranking durante 3+ semanas. Alta convicción, baja rotación.</span></p>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);"><span style="color:var(--gold-dim);">→</span> <span class="t-en">RANK_FINAL ≤ 20 · REGIME: STRONG or LEADER</span><span class="t-es" style="display:none">RANK_FINAL ≤ 20 · RÉGIMEN: STRONG o LEADER</span></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);"><span style="color:var(--gold-dim);">→</span> <span class="t-en">Max 20 positions · Equal-weight within sleeve</span><span class="t-es" style="display:none">Máx. 20 posiciones · Equal-weight dentro del sleeve</span></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);"><span style="color:var(--gold-dim);">→</span> <span class="t-en">Exit: 2-of-3 structural signals required</span><span class="t-es" style="display:none">Salida: 2 de 3 señales estructurales requeridas</span></div>
+      </div>
+    </div>
+
+    <!-- Sleeve B -->
+    <div style="background:var(--surface);border:1px solid var(--border);padding:28px 28px 24px;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;bottom:0;width:2px;background:var(--gold-dim);"></div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--gold-dim);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:12px;">Sleeve B · ~58%</div>
+      <h3 style="font-family:'Playfair Display',serif;font-size:20px;font-weight:400;color:var(--text);margin-bottom:8px;"><span class="t-en">Early Leaders</span><span class="t-es" style="display:none">Líderes Tempranos</span></h3>
+      <p style="font-family:'Inter',sans-serif;font-size:13px;color:var(--text-dim);line-height:1.7;margin-bottom:16px;"><span class="t-en">Stocks accelerating rapidly through rankings before reaching confirmed status. Captures rotation early, before the crowd.</span><span class="t-es" style="display:none">Valores que aceleran rápidamente en el ranking antes de alcanzar el estatus confirmado. Captura la rotación antes que el mercado.</span></p>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);"><span style="color:var(--gold-dim);">→</span> <span class="t-en">Rank improved ≥ 10 positions in 4 weeks</span><span class="t-es" style="display:none">Ranking mejorado ≥ 10 posiciones en 4 semanas</span></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);"><span style="color:var(--gold-dim);">→</span> <span class="t-en">Max 10 positions · Graduates to Sleeve A automatically</span><span class="t-es" style="display:none">Máx. 10 posiciones · Asciende al Sleeve A automáticamente</span></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);"><span style="color:var(--gold-dim);">→</span> <span class="t-en">Score momentum rising 3 consecutive weeks</span><span class="t-es" style="display:none">Momentum del score en alza 3 semanas consecutivas</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leadership Lifecycle -->
+  <div class="reveal" style="max-width:860px;margin:0 auto;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:16px;text-align:center;"><span class="t-en">Leadership Lifecycle — every position follows this path</span><span class="t-es" style="display:none">Ciclo de vida del liderazgo — cada posición sigue este camino</span></div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);">
+      <div style="background:var(--surface);padding:20px 18px;position:relative;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;">Stage 1</div>
+        <div style="font-family:'Playfair Display',serif;font-size:15px;color:var(--gold-dim);margin-bottom:6px;"><span class="t-en">Early Leaders</span><span class="t-es" style="display:none">Líderes Tempranos</span></div>
+        <div style="font-family:'Inter',sans-serif;font-size:11px;color:var(--text-muted);line-height:1.6;"><span class="t-en">Accelerating through rankings. Score rising 3+ weeks.</span><span class="t-es" style="display:none">Acelerando en el ranking. Score en alza 3+ semanas.</span></div>
+        <div style="margin-top:10px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--gold-dim);">Sleeve B</div>
+      </div>
+      <div style="background:var(--surface);padding:20px 18px;position:relative;">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold);opacity:0.4;"></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;">Stage 2</div>
+        <div style="font-family:'Playfair Display',serif;font-size:15px;color:var(--gold);margin-bottom:6px;"><span class="t-en">Confirmed Leaders</span><span class="t-es" style="display:none">Líderes Confirmados</span></div>
+        <div style="font-family:'Inter',sans-serif;font-size:11px;color:var(--text-muted);line-height:1.6;"><span class="t-en">Top 20. Persistent 3+ of last 4 weeks. STRONG/LEADER regime.</span><span class="t-es" style="display:none">Top 20. Persistente 3+ de las últimas 4 semanas. Régimen STRONG/LEADER.</span></div>
+        <div style="margin-top:10px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--gold);">Sleeve A</div>
+      </div>
+      <div style="background:var(--surface);padding:20px 18px;position:relative;">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold-bright);opacity:0.6;"></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;">Stage 3</div>
+        <div style="font-family:'Playfair Display',serif;font-size:15px;color:var(--gold-bright);margin-bottom:6px;"><span class="t-en">Core Leaders</span><span class="t-es" style="display:none">Líderes Core</span></div>
+        <div style="font-family:'Inter',sans-serif;font-size:11px;color:var(--text-muted);line-height:1.6;"><span class="t-en">Top 30 for 8+ consecutive weeks. High-conviction. Rarely exits.</span><span class="t-es" style="display:none">Top 30 durante 8+ semanas consecutivas. Alta convicción. Raramente sale.</span></div>
+        <div style="margin-top:10px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--gold-bright);">Sleeve A</div>
+      </div>
+      <div style="background:var(--surface);padding:20px 18px;position:relative;border-left:1px solid var(--border-bright);">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;">Stage 4</div>
+        <div style="font-family:'Playfair Display',serif;font-size:15px;color:var(--red);margin-bottom:6px;"><span class="t-en">Exit Risk</span><span class="t-es" style="display:none">Riesgo de Salida</span></div>
+        <div style="font-family:'Inter',sans-serif;font-size:11px;color:var(--text-muted);line-height:1.6;"><span class="t-en">1+ exit conditions firing. Watchlist. Exit on 2-of-3 structural signals.</span><span class="t-es" style="display:none">1+ condiciones de salida activas. Vigilancia. Salida con 2 de 3 señales estructurales.</span></div>
+        <div style="margin-top:10px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--red);">Both sleeves</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="reveal" style="text-align:center;margin-top:48px;">
+    <p style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-muted);letter-spacing:0.1em;margin-bottom:20px;"><span class="t-en">No price-based stop-losses · No market timing · Weekly rebalance · Risk Parity weighting</span><span class="t-es" style="display:none">Sin stop-losses de precio · Sin timing de mercado · Rebalanceo semanal · Ponderación por Paridad de Riesgo</span></p>
+    <a href="https://mineralphalab.streamlit.app/" class="btn-primary"><span class="t-en">Access Portfolio Engine →</span><span class="t-es" style="display:none">Accede al Motor de Cartera →</span></a>
+  </div>
+</section>
+
+
+<div class="divider"></div>
+
+<!-- RATIO CHARTS TEASER -->
+<section class="section" id="ratio-charts" style="background:var(--surface);">
+  <div class="section-header reveal" style="text-align:center;max-width:640px;margin:0 auto 48px;">
+    <div class="section-label" style="justify-content:center;"><span class="t-en">Relative Strength Analysis</span><span class="t-es" style="display:none">Análisis de Fuerza Relativa</span></div>
+    <h2 class="section-title" style="max-width:100%;"><span class="t-en">Miners don't move equally.<br><em>The ratio tells the real story.</em></span><span class="t-es" style="display:none">Las mineras no se mueven igual.<br><em>El ratio cuenta la historia real.</em></span></h2>
+    <p class="section-sub" style="max-width:100%;"><span class="t-en">Capital rotates between names before the crowd notices. Ratio analysis reveals who's gaining structural strength.</span><span class="t-es" style="display:none">El capital rota entre nombres antes de que la multitud lo note. El análisis de ratios revela quién está ganando fuerza estructural.</span></p>
+  </div>
+
+  <div class="reveal" style="max-width:820px;margin:0 auto;">
+    <div style="background:var(--charcoal);border:1px solid var(--border);position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(to right,var(--gold),var(--gold-dim),transparent);"></div>
+      <div style="padding:16px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);letter-spacing:0.1em;text-transform:uppercase;">$HL / $AG · Weekly Ratio · 52 weeks</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:0.08em;">Hecla vs First Majestic</span>
+      </div>
+      <!-- Animated ratio chart SVG -->
+      <div style="padding:24px;position:relative;">
+        <svg viewBox="0 0 760 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">
+          <defs>
+            <linearGradient id="ratioFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#B8BFC8" stop-opacity="0.18"/>
+              <stop offset="100%" stop-color="#B8BFC8" stop-opacity="0.01"/>
+            </linearGradient>
+          </defs>
+          <!-- Grid lines -->
+          <line x1="0" y1="40" x2="760" y2="40" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+          <line x1="0" y1="80" x2="760" y2="80" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+          <line x1="0" y1="120" x2="760" y2="120" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+          <!-- Area fill -->
+          <path d="M0,120 C40,110 80,95 120,85 C160,75 200,90 240,80 C280,70 320,55 360,50 C400,45 440,60 480,55 C520,50 560,35 600,30 C640,25 700,40 760,45 L760,160 L0,160 Z" fill="url(#ratioFill)"/>
+          <!-- Ratio line -->
+          <path d="M0,120 C40,110 80,95 120,85 C160,75 200,90 240,80 C280,70 320,55 360,50 C400,45 440,60 480,55 C520,50 560,35 600,30 C640,25 700,40 760,45" fill="none" stroke="#B8BFC8" stroke-width="1.5" stroke-linecap="round"/>
+          <!-- PMO line (bottom panel) -->
+          <line x1="0" y1="145" x2="760" y2="145" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+        </svg>
+        <div style="position:absolute;top:32px;right:32px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:0.06em;">PMO turning ↓ from overbought</div>
+      </div>
+      <!-- Stats row -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border-top:1px solid var(--border);">
+        <div style="background:var(--surface);padding:14px 20px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">Current</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--text);">0.9456</div>
+        </div>
+        <div style="background:var(--surface);padding:14px 20px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">WoW</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--green);">+7.86%</div>
+        </div>
+        <div style="background:var(--surface);padding:14px 20px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">52w High</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--text);">1.0302</div>
+        </div>
+        <div style="background:var(--surface);padding:14px 20px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">52w Low</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--text);">0.6316</div>
+        </div>
+      </div>
+      <!-- Locked overlay -->
+      <div style="padding:20px 24px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.2);">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:0.06em;">10 pre-built pairs + custom · Interactive PMO · 52-week history</span>
+        <a href="https://mineralphalab.streamlit.app/" class="btn-primary" style="padding:8px 20px;font-size:11px;white-space:nowrap;">Explore Ratios →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<div class="divider"></div>
+
+<!-- METHODOLOGY SECTION -->
+<section class="section" id="methodology" style="background:var(--surface);">
+  <div style="max-width:860px;margin:0 auto;">
+
+    <!-- Header -->
+    <div class="section-header">
+      <div class="section-label reveal">How It Works</div>
+      <h2 class="section-title">
+        <span class="meth-en">Built on four dimensions.<br><em>One composite output.</em></span>
+        <span class="meth-es" style="display:none;">Cuatro dimensiones.<br><em>Un output unificado.</em></span>
+      </h2>
+      <p class="section-sub">
+        <span class="meth-en">RANK_FINAL is not a simple return ranking. It integrates relative strength, structural positioning, behavioral classification, and movement quality — simultaneously — to surface leadership before it becomes obvious.</span>
+        <span class="meth-es" style="display:none;">RANK_FINAL no es un ranking simple de retorno. Integra fuerza relativa, posicionamiento estructural, clasificación comportamental y calidad del movimiento — simultáneamente — para revelar el liderazgo antes de que sea evidente.</span>
+      </p>
+      <!-- Lang toggle -->
+      <div style="display:flex;gap:8px;margin-top:20px;margin-bottom:8px;opacity:1!important;transform:none!important;">
+        <button id="meth-btn-en" onclick="setLang('en')" style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;padding:9px 22px;cursor:pointer;border:2px solid var(--gold);color:var(--obsidian);background:var(--gold);">EN</button>
+        <button id="meth-btn-es" onclick="setLang('es')" style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;padding:9px 22px;cursor:pointer;border:2px solid var(--gold);color:var(--gold);background:transparent;">ES</button>
+      </div>
+    </div>
+
+    <!-- RANK_FINAL -->
+    <div class="reveal" style="margin-bottom:48px;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
+        <span style="display:block;width:24px;height:1px;background:var(--gold);"></span>
+        <span class="meth-en">RANK_FINAL — The Core Metric</span><span class="meth-es" style="display:none;">RANK_FINAL — La Métrica Central</span>
+      </div>
+      <div style="display:grid;grid-template-columns:auto 1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);">
+        <div style="background:var(--charcoal);padding:10px 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;">Rank</div>
+        <div style="background:var(--charcoal);padding:10px 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;">Signal</div>
+        <div style="background:var(--charcoal);padding:10px 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;">Profile</div>
+        <!-- Row 1 -->
+        <div style="background:#0F0F0F;padding:14px 16px;font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--gold);border-top:1px solid var(--border);">#1–10</div>
+        <div style="background:#0F0F0F;padding:14px 16px;border-top:1px solid var(--border);"><span style="background:rgba(184,191,200,0.15);color:var(--gold);border:1px solid var(--gold-dim);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 10px;letter-spacing:0.08em;">Top-tier leadership</span></div>
+        <div style="background:#0F0F0F;padding:14px 16px;font-size:13px;color:var(--text-dim);border-top:1px solid var(--border);">Strong RS · Near highs · Positive excess return</div>
+        <!-- Row 2 -->
+        <div style="background:var(--charcoal);padding:14px 16px;font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--gold);border-top:1px solid var(--border);">#11–30</div>
+        <div style="background:var(--charcoal);padding:14px 16px;border-top:1px solid var(--border);"><span style="background:rgba(76,175,122,0.1);color:#7acc88;border:1px solid rgba(76,175,122,0.3);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 10px;letter-spacing:0.08em;">Strong candidates</span></div>
+        <div style="background:var(--charcoal);padding:14px 16px;font-size:13px;color:var(--text-dim);border-top:1px solid var(--border);">Solid structure · Good relative performance</div>
+        <!-- Row 3 -->
+        <div style="background:#0F0F0F;padding:14px 16px;font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--gold);border-top:1px solid var(--border);">#31–60</div>
+        <div style="background:#0F0F0F;padding:14px 16px;border-top:1px solid var(--border);"><span style="background:rgba(106,120,136,0.1);color:#6a7888;border:1px solid rgba(106,120,136,0.3);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 10px;letter-spacing:0.08em;">Moderate ranking</span></div>
+        <div style="background:#0F0F0F;padding:14px 16px;font-size:13px;color:var(--text-dim);border-top:1px solid var(--border);">Mixed signals · Some strength, inconsistencies</div>
+        <!-- Row 4 -->
+        <div style="background:var(--charcoal);padding:14px 16px;font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--gold);border-top:1px solid var(--border);">#60+</div>
+        <div style="background:var(--charcoal);padding:14px 16px;border-top:1px solid var(--border);"><span style="background:rgba(196,92,92,0.1);color:#c45c5c;border:1px solid rgba(196,92,92,0.3);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 10px;letter-spacing:0.08em;">Weak positioning</span></div>
+        <div style="background:var(--charcoal);padding:14px 16px;font-size:13px;color:var(--text-dim);border-top:1px solid var(--border);">Lagging · Poor structure · High drawdown</div>
+      </div>
+      <div style="margin-top:1px;background:rgba(184,191,200,0.04);border:1px solid var(--border);border-top:none;padding:16px 20px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);letter-spacing:0.06em;line-height:1.9;">
+        Integrates: Relative strength · Benchmark outperformance · Price structure · Behavioral consistency · Movement quality (event score)
+      </div>
+    </div>
+
+    <!-- Advanced Type grid -->
+    <div class="reveal" style="margin-bottom:48px;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
+        <span style="display:block;width:24px;height:1px;background:var(--gold);"></span>
+        <span class="meth-en">Behavioral Classification (advanced_type)</span><span class="meth-es" style="display:none;">Clasificación Comportamental (advanced_type)</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);">
+        <div style="background:var(--charcoal);padding:24px 28px;">
+          <span style="background:rgba(184,191,200,0.15);color:var(--gold);border:1px solid var(--gold-dim);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 10px;letter-spacing:0.1em;text-transform:uppercase;display:inline-block;margin-bottom:10px;">alpha</span>
+          <div style="font-family:'Playfair Display',serif;font-size:16px;margin-bottom:6px;">Structural Leadership</div>
+          <div style="font-size:13px;color:var(--text-dim);line-height:1.7;">The cleanest form of market leadership. Strong RS, solid structure, behavioral consistency. Sustainable outperformers — highest conviction classification.</div>
+        </div>
+        <div style="background:var(--charcoal);padding:24px 28px;">
+          <span style="background:rgba(224,144,64,0.12);color:#e09040;border:1px solid rgba(224,144,64,0.3);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 10px;letter-spacing:0.1em;text-transform:uppercase;display:inline-block;margin-bottom:10px;">alpha_fast</span>
+          <div style="font-family:'Playfair Display',serif;font-size:16px;margin-bottom:6px;">Accelerating Momentum</div>
+          <div style="font-size:13px;color:var(--text-dim);line-height:1.7;">Strong and rapid price appreciation. Typical of early or accelerating market phases. High potential — but require active monitoring.</div>
+        </div>
+        <div style="background:var(--charcoal);padding:24px 28px;border-top:1px solid var(--border);">
+          <span style="background:rgba(76,175,122,0.1);color:#7acc88;border:1px solid rgba(76,175,122,0.3);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 10px;letter-spacing:0.1em;text-transform:uppercase;display:inline-block;margin-bottom:10px;">early_trend</span>
+          <div style="font-family:'Playfair Display',serif;font-size:16px;margin-bottom:6px;">Emerging Leadership</div>
+          <div style="font-size:13px;color:var(--text-dim);line-height:1.7;">Beginning to transition into strength. Ideal for early positioning before moves become widely recognized. Highest potential, least confirmed.</div>
+        </div>
+        <div style="background:var(--charcoal);padding:24px 28px;border-top:1px solid var(--border);">
+          <span style="background:rgba(106,120,136,0.1);color:#6a7888;border:1px solid rgba(106,120,136,0.3);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 10px;letter-spacing:0.1em;text-transform:uppercase;display:inline-block;margin-bottom:10px;">rebound</span>
+          <div style="font-family:'Playfair Display',serif;font-size:16px;margin-bottom:6px;">Technical Recovery</div>
+          <div style="font-size:13px;color:var(--text-dim);line-height:1.7;">Recovering from significant drawdowns. Technical in nature. May grade well in Breakouts — but without structural leadership backing, not an institutional opportunity.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Convergence -->
+    <div class="reveal">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
+        <span style="display:block;width:24px;height:1px;background:var(--gold);"></span>
+        <span class="meth-en">The Convergence Rule — Maximum Conviction</span><span class="meth-es" style="display:none;">La Regla de Convergencia — Máxima Convicción</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);">
+        <div style="background:var(--charcoal);padding:28px;text-align:center;position:relative;overflow:hidden;">
+          <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold-dim);"></div>
+          <div style="font-size:24px;margin-bottom:12px;">🏆</div>
+          <div style="font-family:'Playfair Display',serif;font-size:17px;margin-bottom:8px;">Leaders</div>
+          <div style="font-size:13px;color:var(--text-dim);line-height:1.7;">RANK_FINAL in the Top 15. Structural dominance confirmed across all composite dimensions.</div>
+        </div>
+        <div style="background:var(--charcoal);padding:28px;text-align:center;position:relative;overflow:hidden;">
+          <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold-dim);"></div>
+          <div style="font-size:24px;margin-bottom:12px;">⚡</div>
+          <div style="font-family:'Playfair Display',serif;font-size:17px;margin-bottom:8px;">Breakouts</div>
+          <div style="font-size:13px;color:var(--text-dim);line-height:1.7;">A+ grade · RR > 2.5 · alpha or alpha_fast type · High conviction. Setup quality is exceptional.</div>
+        </div>
+        <div style="background:var(--charcoal);padding:28px;text-align:center;position:relative;overflow:hidden;">
+          <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold-dim);"></div>
+          <div style="font-size:24px;margin-bottom:12px;">📊</div>
+          <div style="font-family:'Playfair Display',serif;font-size:17px;margin-bottom:8px;">Historical</div>
+          <div style="font-size:13px;color:var(--text-dim);line-height:1.7;">Sustained Top-10 across 3+ consecutive snapshots. Institutional accumulation in progress.</div>
+        </div>
+      </div>
+      <div style="background:rgba(184,191,200,0.06);border:1px solid var(--gold-dim);border-top:none;padding:20px 28px;text-align:center;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">When all three align simultaneously</div>
+        <div style="font-family:'Playfair Display',serif;font-size:20px;color:var(--gold);font-style:italic;">Highest conviction setup in the universe at that moment.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PORTFOLIO ENGINE SECTION -->
+<section class="section" id="portfolio-engine" style="background:var(--obsidian);">
+  <div style="max-width:960px;margin:0 auto;">
+
+    <div class="section-header reveal">
+      <div class="section-label"><span class="t-en">Portfolio Engine · Track Record</span><span class="t-es" style="display:none">Motor de Cartera · Historial del Sistema</span></div>
+      <h2 class="section-title" style="max-width:700px;">
+        <span class="t-en">Not the highest return.<br><em>The highest quality return.</em></span><span class="t-es" style="display:none">No la mayor rentabilidad.<br><em>La rentabilidad de mayor calidad.</em></span>
+      </h2>
+      <p class="section-sub" style="max-width:580px;">
+        <span class="t-en">Confirmed Leaders captured the highest raw upside. Miner Alpha Combined delivered the strongest risk-adjusted portfolio — across a full 4-year cycle including a bear market, a transition, and a full bull run.</span><span class="t-es" style="display:none">Los Líderes Confirmados capturaron la mayor subida bruta. Miner Alpha Combined generó la cartera más sólida ajustada por riesgo — a lo largo de un ciclo completo de 4 años incluyendo mercado bajista, transición y subida alcista.</span>
+      </p>
+    </div>
+
+    <!-- KPI row 1 -->
+    <div class="reveal" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:1px;">
+      <div style="background:var(--charcoal);padding:28px 24px;text-align:center;">
+        <div style="font-family:'Playfair Display',serif;font-size:40px;color:var(--gold);line-height:1;margin-bottom:8px;">1.861</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:4px;"><span class="t-en">Sharpe Ratio</span><span class="t-es" style="display:none">Ratio Sharpe</span></div>
+        <div style="font-size:12px;color:var(--text-muted);"><span class="t-en">Risk-adjusted return</span><span class="t-es" style="display:none">Rentabilidad ajustada por riesgo</span></div>
+      </div>
+      <div style="background:var(--charcoal);padding:28px 24px;text-align:center;">
+        <div style="font-family:'Playfair Display',serif;font-size:40px;color:var(--gold);line-height:1;margin-bottom:8px;">42.8%</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:4px;">CAGR</div>
+        <div style="font-size:12px;color:var(--text-muted);">Apr 2022 → Apr 2026</div>
+      </div>
+      <div style="background:var(--charcoal);padding:28px 24px;text-align:center;">
+        <div style="font-family:'Playfair Display',serif;font-size:40px;color:#c94c4c;line-height:1;margin-bottom:8px;">-13.8%</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:4px;"><span class="t-en">Max Drawdown</span><span class="t-es" style="display:none">DD Máximo</span></div>
+        <div style="font-size:12px;color:var(--text-muted);"><span class="t-en">Worst peak-to-trough</span><span class="t-es" style="display:none">Peor pico a valle</span></div>
+      </div>
+      <div style="background:var(--charcoal);padding:28px 24px;text-align:center;">
+        <div style="font-family:'Playfair Display',serif;font-size:40px;color:var(--gold);line-height:1;margin-bottom:8px;">100→460+</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:4px;"><span class="t-en">Portfolio Growth</span><span class="t-es" style="display:none">Crecimiento de Cartera</span></div>
+        <div style="font-size:12px;color:var(--text-muted);"><span class="t-en">Full 4-year cycle</span><span class="t-es" style="display:none">Ciclo completo de 4 años</span></div>
+      </div>
+    </div>
+
+    <!-- KPI row 2 regime -->
+    <div class="reveal" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:48px;">
+      <div style="background:var(--surface);padding:20px 24px;text-align:center;">
+        <div style="font-family:'Playfair Display',serif;font-size:28px;color:#c94c4c;line-height:1;margin-bottom:6px;">-6.0%</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:3px;"><span class="t-en">2022 Bear</span><span class="t-es" style="display:none">2022 Bajista</span></div>
+        <div style="font-size:11px;color:var(--text-muted);"><span class="t-en">Survived crash</span><span class="t-es" style="display:none">Superó la caída</span></div>
+      </div>
+      <div style="background:var(--surface);padding:20px 24px;text-align:center;">
+        <div style="font-family:'Playfair Display',serif;font-size:28px;color:#c9843c;line-height:1;margin-bottom:6px;">+68.7%</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:3px;"><span class="t-en">2023 Transition</span><span class="t-es" style="display:none">2023 Transición</span></div>
+        <div style="font-size:11px;color:var(--text-muted);"><span class="t-en">Captured early</span><span class="t-es" style="display:none">Capturado temprano</span></div>
+      </div>
+      <div style="background:var(--surface);padding:20px 24px;text-align:center;">
+        <div style="font-family:'Playfair Display',serif;font-size:28px;color:var(--gold);line-height:1;margin-bottom:6px;">+41.1%</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:3px;">2024</div>
+        <div style="font-size:11px;color:var(--text-muted);"><span class="t-en">Expansion</span><span class="t-es" style="display:none">Expansión</span></div>
+      </div>
+      <div style="background:var(--surface);padding:20px 24px;text-align:center;">
+        <div style="font-family:'Playfair Display',serif;font-size:28px;color:#4caf7a;line-height:1;margin-bottom:6px;">+117.7%</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:3px;"><span class="t-en">2025 Bull</span><span class="t-es" style="display:none">2025 Alcista</span></div>
+        <div style="font-size:11px;color:var(--text-muted);"><span class="t-en">Full rally captured</span><span class="t-es" style="display:none">Rally completo capturado</span></div>
+      </div>
+    </div>
+
+    <!-- Equity curve SVG -->
+    <div class="reveal" style="margin-bottom:20px;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
+        <span style="display:block;width:24px;height:1px;background:var(--gold);"></span>
+        <span class="t-en">Strategy Performance — 4 Years (Start = 100)</span><span class="t-es" style="display:none">Rendimiento del Sistema — 4 Años (Base = 100)</span>
+      </div>
+      <div style="background:var(--charcoal);border:1px solid var(--border);padding:24px;">
+        <svg viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
+          <line x1="0" y1="56" x2="900" y2="56" stroke="#1E1E1E" stroke-width="0.5"/>
+          <line x1="0" y1="112" x2="900" y2="112" stroke="#1E1E1E" stroke-width="0.5"/>
+          <line x1="0" y1="168" x2="900" y2="168" stroke="#1E1E1E" stroke-width="0.5"/>
+          <line x1="0" y1="224" x2="900" y2="224" stroke="#1E1E1E" stroke-width="0.5"/>
+          <text x="8" y="52" fill="#3A3A3A" font-size="10" font-family="IBM Plex Mono">500</text>
+          <text x="8" y="108" fill="#3A3A3A" font-size="10" font-family="IBM Plex Mono">400</text>
+          <text x="8" y="164" fill="#3A3A3A" font-size="10" font-family="IBM Plex Mono">300</text>
+          <text x="8" y="220" fill="#3A3A3A" font-size="10" font-family="IBM Plex Mono">200</text>
+          <text x="8" y="268" fill="#3A3A3A" font-size="10" font-family="IBM Plex Mono">100</text>
+          <text x="50" y="278" fill="#3A3A3A" font-size="10" font-family="IBM Plex Mono">Jul 2022</text>
+          <text x="390" y="278" fill="#3A3A3A" font-size="10" font-family="IBM Plex Mono">Jan 2024</text>
+          <text x="730" y="278" fill="#3A3A3A" font-size="10" font-family="IBM Plex Mono">Jan 2026</text>
+          <polyline points="50,260 150,268 250,255 350,242 450,210 550,168 640,112 720,72 800,80 880,68" fill="none" stroke="#1D9E75" stroke-width="1.5" opacity="0.85"/>
+          <polyline points="50,260 150,264 250,258 350,248 450,224 550,188 640,148 720,112 800,118 880,108" fill="none" stroke="#534AB7" stroke-width="1.5" opacity="0.85"/>
+          <polyline points="50,260 150,266 250,256 350,244 450,217 550,178 640,130 720,92 800,99 880,88" fill="none" stroke="#B8BFC8" stroke-width="3"/>
+          <circle cx="880" cy="88" r="4" fill="#B8BFC8"/>
+        </svg>
+        <div style="display:flex;gap:24px;margin-top:16px;justify-content:center;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:28px;height:3px;background:#B8BFC8;"></div>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#B8BFC8;">Miner Alpha Combined</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:28px;height:2px;background:#1D9E75;opacity:0.85;"></div>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);"><span class="t-en">Confirmed Leaders</span><span class="t-es" style="display:none">Líderes Confirmados</span></span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:28px;height:2px;background:#534AB7;opacity:0.85;"></div>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);"><span class="t-en">Early Leaders</span><span class="t-es" style="display:none">Líderes Tempranos</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Positioning copy -->
+    <div class="reveal" style="margin-bottom:48px;padding:20px 28px;border-left:2px solid var(--gold);background:rgba(184,191,200,0.04);">
+      <div style="font-family:'Playfair Display',serif;font-size:18px;color:var(--text);margin-bottom:8px;line-height:1.5;">
+        <span class="t-en">Highest raw return is one thing.<br>Highest quality return is another.</span><span class="t-es" style="display:none">La mayor rentabilidad bruta es una cosa.<br>La rentabilidad de mayor calidad es otra.</span>
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold-dim);letter-spacing:0.1em;">
+        <span class="t-en">Risk-adjusted winner &nbsp;·&nbsp; Efficient frontier solution</span><span class="t-es" style="display:none">Ganador ajustado por riesgo &nbsp;·&nbsp; Solución de frontera eficiente</span>
+      </div>
+    </div>
+
+    <!-- Architecture cards -->
+    <div class="reveal" style="margin-bottom:48px;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
+        <span style="display:block;width:24px;height:1px;background:var(--gold);"></span>
+        <span class="t-en">Portfolio Architecture</span><span class="t-es" style="display:none">Arquitectura de Cartera</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);">
+        <div style="background:var(--charcoal);padding:28px;">
+          <svg width="20" height="20" viewBox="0 0 20 20" style="margin-bottom:12px;display:block;"><circle cx="10" cy="10" r="10" fill="#534AB7"/></svg>
+          <div style="font-family:'Playfair Display',serif;font-size:17px;margin-bottom:6px;"><span class="t-en">Early Leaders</span><span class="t-es" style="display:none">Líderes Tempranos</span></div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px;"><span class="t-en">Emerging · Acceleration</span><span class="t-es" style="display:none">Emergente · Aceleración</span></div>
+          <div style="font-size:13px;color:var(--text-dim);line-height:1.7;"><span class="t-en">Stocks accelerating through rankings before reaching confirmed leadership. Captured systematically through rank momentum signals.</span><span class="t-es" style="display:none">Acciones que aceleran en el ranking antes de alcanzar el liderazgo confirmado. Detectadas sistemáticamente mediante señales de momentum de ranking.</span></div>
+        </div>
+        <div style="background:var(--charcoal);padding:28px;">
+          <svg width="20" height="20" viewBox="0 0 20 20" style="margin-bottom:12px;display:block;"><circle cx="10" cy="10" r="10" fill="#1D9E75"/></svg>
+          <div style="font-family:'Playfair Display',serif;font-size:17px;margin-bottom:6px;"><span class="t-en">Confirmed Leaders</span><span class="t-es" style="display:none">Líderes Confirmados</span></div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px;"><span class="t-en">Persistence · Confirmed</span><span class="t-es" style="display:none">Persistencia · Confirmado</span></div>
+          <div style="font-size:13px;color:var(--text-dim);line-height:1.7;"><span class="t-en">Sustained top-ranking confirmed over consecutive weeks. Leadership persistence is the entry condition. Not prediction.</span><span class="t-es" style="display:none">Liderazgo sostenido en el top durante semanas consecutivas. La persistencia del liderazgo es la condición de entrada. No la predicción.</span></div>
+        </div>
+        <div style="background:var(--surface);padding:28px;border:1px solid var(--gold-dim);position:relative;overflow:hidden;">
+          <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);"></div>
+          <div style="font-size:20px;margin-bottom:12px;">⚖️</div>
+          <div style="font-family:'Playfair Display',serif;font-size:17px;margin-bottom:6px;color:var(--gold);">Miner Alpha Combined</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px;"><span class="t-en">Risk-Adjusted · Flagship</span><span class="t-es" style="display:none">Ajustado por riesgo · Flagship</span></div>
+          <div style="font-size:13px;color:var(--text-dim);line-height:1.7;"><span class="t-en">Dynamic weighting balancing both models by volatility. The risk-adjusted flagship — Sharpe 1.86 · Max DD -13.8%.</span><span class="t-es" style="display:none">Ponderación dinámica que equilibra ambos modelos por volatilidad. El flagship ajustado por riesgo — Sharpe 1,86 · DD Máx. -13,8%.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="reveal" style="text-align:center;padding-bottom:16px;">
+      <p style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:16px;"><span class="t-en">PRO Access</span><span class="t-es" style="display:none">Acceso PRO</span></p>
+      <h3 style="font-family:'Playfair Display',serif;font-size:28px;color:var(--text);margin-bottom:12px;"><span class="t-en">Access the Decision Engine.</span><span class="t-es" style="display:none">Accede al motor de decisión.</span></h3>
+      <p style="font-size:15px;color:var(--text-dim);max-width:480px;margin:0 auto 28px;line-height:1.7;"><span class="t-en">PRO shows you the live portfolio — which stocks are in right now, which entered this week, and which are at exit risk.</span><span class="t-es" style="display:none">PRO te muestra la cartera en tiempo real — qué acciones están dentro ahora, cuáles entraron esta semana y cuáles tienen riesgo de salida.</span></p>
+      <a href="https://mineralphalab.streamlit.app/" class="btn-primary" style="padding:14px 36px;font-size:14px;"><span class="t-en">Access Portfolio Engine →</span><span class="t-es" style="display:none">Acceder al Motor de Cartera →</span></a>
+    </div>
+
+    <!-- Public Research Notes -->
+    <div class="reveal" style="margin-top:56px;padding:28px 32px;border:1px solid var(--border-bright);background:var(--surface);">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:10px;">
+        <span style="display:block;width:24px;height:1px;background:var(--gold);"></span>
+        <span class="t-en">Public Research Notes</span><span class="t-es" style="display:none">Notas Públicas de Investigación</span>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+        <a href="#" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);text-decoration:none;border:1px solid var(--gold-dim);padding:8px 18px;letter-spacing:0.08em;transition:all 0.2s;" onmouseover="this.style.background='rgba(184,191,200,0.1)'" onmouseout="this.style.background='transparent'">
+          <span class="t-en">Portfolio Methodology →</span><span class="t-es" style="display:none">Metodología de Cartera →</span>
+        </a>
+        <a href="#" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);text-decoration:none;border:1px solid var(--gold-dim);padding:8px 18px;letter-spacing:0.08em;transition:all 0.2s;" onmouseover="this.style.background='rgba(184,191,200,0.1)'" onmouseout="this.style.background='transparent'">
+          <span class="t-en">Public Backtest White Paper →</span><span class="t-es" style="display:none">Informe Público de Backtest →</span>
+        </a>
+      </div>
+      <p style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:0.08em;"><span class="t-en">Public version. Operating rules omitted.</span><span class="t-es" style="display:none">Versión pública. Reglas operativas omitidas.</span></p>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- CONVERSION / PRICING SECTION -->
+<section class="conversion-section" id="pricing">
+  <div class="reveal">
+    <p class="conversion-label"><span class="t-en">Access the Decision Engine</span><span class="t-es" style="display:none">Accede al motor de decisión</span></p>
+    <h2 class="conversion-title"><span class="t-en">Leadership intelligence.<br><em>Portfolio precision.</em></span><span class="t-es" style="display:none">Inteligencia de liderazgo.<br><em>Precisión de cartera.</em></span></h2>
+    <p class="conversion-sub" style="margin-bottom:16px;"><span class="t-en">Weekly rankings. Systematic portfolio signals. 4-year public track record.</span><span class="t-es" style="display:none">Rankings semanales. Señales sistemáticas de cartera. Historial público de 4 años.</span></p>
+    <p style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-dim);letter-spacing:0.06em;line-height:2;max-width:400px;margin:0 auto 40px;text-align:left;border-left:2px solid var(--gold-dim);padding-left:20px;"><span class="t-en">Sharpe 1.86 · Max DD -13.8%<br>100 → 460+ over 4 years<br><span style="color:var(--gold);">The edge is positioning, not prediction.</span></span><span class="t-es" style="display:none">Sharpe 1,86 · DD Máx. -13,8%<br>100 → 460+ en 4 años<br><span style="color:var(--gold);">La ventaja es el posicionamiento, no la predicción.</span></span></p>
+  </div>
+
+  <div class="pricing-card-group reveal">
+    <div class="pricing-card">
+      <p class="pricing-tier">Free</p>
+      <p class="pricing-price">$0</p>
+      <p class="pricing-period"><span class="t-en">Forever free</span><span class="t-es" style="display:none">Siempre gratis</span></p>
+      <ul class="pricing-features">
+        <li class="pf-check"><span class="t-en">Top 10 rankings weekly</span><span class="t-es" style="display:none">Top 10 rankings semanales</span></li>
+        <li class="pf-check"><span class="t-en">4-sector overview</span><span class="t-es" style="display:none">Visión general de 4 sectores</span></li>
+        <li class="pf-check"><span class="t-en">Live ticker tape</span><span class="t-es" style="display:none">Ticker tape en directo</span></li>
+        <li class="pf-lock"><span class="t-en">Full dataset access</span><span class="t-es" style="display:none">Acceso completo al dataset</span></li>
+        <li class="pf-lock"><span class="t-en">Filters &amp; alerts</span><span class="t-es" style="display:none">Filtros y alertas</span></li>
+        <li class="pf-lock"><span class="t-en">Portfolio Engine</span><span class="t-es" style="display:none">Motor de Cartera</span></li>
+      </ul>
+      <a href="https://mineralphalab.streamlit.app/" class="btn-ghost btn-full" style="justify-content:center;border:1px solid var(--border);padding:12px 24px;"><span class="t-en">Continue Free</span><span class="t-es" style="display:none">Continuar Gratis</span></a>
+    </div>
+
+    <div class="pricing-card featured" style="border:1px solid #B8BFC8;background:#0F0F0F;padding:40px 36px;position:relative;box-shadow:0 0 40px rgba(184,191,200,.08);">
+      <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(to right,#B8BFC8,transparent);"></div>
+      <p style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.3em;color:#6E7680;text-transform:uppercase;margin-bottom:20px;"><span class="t-en">Founding PRO</span><span class="t-es" style="display:none">Founding PRO</span></p>
+      <p style="font-family:'Playfair Display',serif;font-size:52px;color:#E8EBF0;line-height:1;margin-bottom:6px;">$39.90 <span style="font-family:'IBM Plex Mono',monospace;font-size:18px;color:#4A4A4A;">/ mo</span></p>
+      <p style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#4A4A4A;letter-spacing:.1em;margin-bottom:0;"><span class="t-en">Billed monthly · Cancel anytime</span><span class="t-es" style="display:none">Facturación mensual · Cancela cuando quieras</span></p>
+      <div style="margin:20px 0;padding:18px 20px;background:rgba(184,191,200,.05);border:1px solid rgba(184,191,200,.15);">
+        <p style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#6E7680;margin-bottom:8px;">★ <span class="t-en">Founding Member — until public opening</span><span class="t-es" style="display:none">Miembro Fundador — hasta apertura pública</span></p>
+        <p style="font-family:'Playfair Display',serif;font-size:24px;color:#E8EBF0;margin-bottom:8px;"><strong>$349.90 / <span class="t-en">year</span><span class="t-es" style="display:none">año</span></strong></p>
+        <p style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6A7A8A;line-height:1.9;"><span class="t-en">✓ Pre-launch access<br>✓ Founding price locked in<br>✓ Full Portfolio Engine — from day one</span><span class="t-es" style="display:none">✓ Acceso pre-apertura<br>✓ Precio fundador bloqueado<br>✓ Motor de Cartera completo — desde el primer día</span></p>
+        <p style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#4A4A4A;margin-top:8px;"><span class="t-en">After launch: $399.90 / year</span><span class="t-es" style="display:none">Tras la apertura: $399,90 / año</span></p>
+      </div>
+      <ul class="pricing-features">
+        <li class="pf-check"><span class="t-en">1,300+ assets, complete rankings</span><span class="t-es" style="display:none">1.300+ activos, rankings completos</span></li>
+        <li class="pf-check"><span class="t-en">Early Leaders + Confirmed Leaders signals</span><span class="t-es" style="display:none">Señales de Líderes Tempranos y Confirmados</span></li>
+        <li class="pf-check"><span class="t-en">All filters, alerts &amp; watchlists</span><span class="t-es" style="display:none">Todos los filtros, alertas y watchlists</span></li>
+        <li class="pf-check"><span class="t-en">Historical data</span><span class="t-es" style="display:none">Datos históricos</span></li>
+        <li class="pf-check"><span class="t-en">CSV / JSON export</span><span class="t-es" style="display:none">Exportación CSV / JSON</span></li>
+        <li class="pf-check"><span class="t-en">Weekly rotation briefing</span><span class="t-es" style="display:none">Briefing semanal de rotación</span></li>
+        <li class="pf-check"><span class="t-en">Portfolio Engine — live signals</span><span class="t-es" style="display:none">Motor de Cartera — señales en vivo</span></li>
+      </ul>
+      <a href="https://mineralphalab.streamlit.app/" style="display:block;margin-top:32px;padding:18px 24px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:400;letter-spacing:.14em;text-transform:uppercase;background:transparent;color:#B8BFC8;border:1px solid #B8BFC8;text-align:center;text-decoration:none;transition:all 0.2s;" onmouseover="this.style.background='rgba(184,191,200,0.08)';this.style.color='#E8EBF0';this.style.borderColor='#E8EBF0'" onmouseout="this.style.background='transparent';this.style.color='#B8BFC8';this.style.borderColor='#B8BFC8'"><span class="t-en">Access the Decision Engine →</span><span class="t-es" style="display:none">Accede al Motor de Decisión →</span></a>
+    </div>
+  </div>
+
+  <p class="price-note reveal"><span class="t-en">14-day free trial on PRO &nbsp;·&nbsp; No card required to start &nbsp;·&nbsp; Full access from day one</span><span class="t-es" style="display:none">14 días de prueba gratis en PRO &nbsp;·&nbsp; Sin tarjeta para empezar &nbsp;·&nbsp; Acceso completo desde el primer día</span></p>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>
+    <a href="#" class="nav-logo" style="margin-bottom:8px;display:inline-flex;">
+      <div class="logo-mark" style="width:20px;height:20px;"></div>
+      <span class="logo-text" style="font-size:14px;margin-left:8px;">Miner<span>Alpha</span> Lab</span>
+    </a>
+    <p class="footer-note" style="margin-top:8px;"><span class="t-en">Data-driven intelligence for the mining sector.</span><span class="t-es" style="display:none">Inteligencia cuantitativa para el sector minero.</span></p>
+  </div>
+  <ul class="footer-links">
+    <li><a href="#">Methodology</a></li>
+    <li><a href="#">Privacy</a></li>
+    <li><a href="#">Terms</a></li>
+    <li><a href="#">Contact</a></li>
+  </ul>
+</footer>
+
+<!-- PRO MODAL -->
+<div class="pro-modal-backdrop" id="proModal" onclick="hideProModal(event)">
+  <div class="pro-modal">
+    <button class="pro-modal-close" onclick="hideProModal()">×</button>
+    <span class="pro-modal-icon">🔒</span>
+    <p class="pro-modal-eyebrow"><span class="t-en">PRO Feature</span><span class="t-es" style="display:none">Función PRO</span></p>
+    <h3 class="pro-modal-title"><span class="t-en">Unlock full<br><em>functionality.</em></span><span class="t-es" style="display:none">Desbloquea la<br><em>funcionalidad completa.</em></span></h3>
+    <p class="pro-modal-text"><span class="t-en">This feature is restricted to PRO members. Access complete rankings, all signal columns, filters, alerts, and the full 1,300+ asset dataset.</span><span class="t-es" style="display:none">Esta función está restringida a miembros PRO. Accede a los rankings completos, todas las columnas de señal, filtros, alertas y el dataset completo de más de 1.300 activos.</span></p>
+    <a href="https://mineralphalab.streamlit.app/" class="btn-primary" style="display:block;text-align:center;" onclick="hideProModal()"><span class="t-en">Access the Decision Engine →</span><span class="t-es" style="display:none">Accede al Motor de Decisión →</span></a>
+  </div>
+</div>
+
+<script>
+
+  // ── Animated counters ──────────────────────────────────────────────────────
+  function animateCounter(el) {
+    const target = parseInt(el.dataset.target);
+    const suffix = el.dataset.suffix || '';
+    const duration = 1800;
+    const step = target / (duration / 16);
+    let current = 0;
+    const timer = setInterval(() => {
+      current += step;
+      if (current >= target) {
+        current = target;
+        clearInterval(timer);
+      }
+      el.textContent = Math.floor(current).toLocaleString() + suffix;
+    }, 16);
+  }
+
+  const counterObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        animateCounter(entry.target);
+        counterObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.5 });
+
+  document.querySelectorAll('.counter').forEach(el => counterObserver.observe(el));
+
+  // ── Live rankings from Supabase ────────────────────────────────────────────
+  const SUPABASE_URL = 'https://hanuswpednecgsaorerm.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhhbnVzd3BlZG5lY2dzYW9yZXJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI2MzM3MjIsImV4cCI6MjA0ODIwOTcyMn0.NRCnx_dEH5GGAaqJBJg-EMjBJJmSe2u5M3HGUcJM7Xs';
+
+  async function loadLiveRankings() {
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/ticker_history?family=eq.XAU&select=ticker,rank_final,regime,date&order=date.desc,rank_final.asc&limit=50`,
+        { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` } }
+      );
+      if (!res.ok) throw new Error('fetch failed');
+      const data = await res.json();
+      if (!data || data.length === 0) return;
+
+      // Get latest date
+      const latestDate = data[0].date;
+      const latest = data.filter(r => r.date === latestDate && r.rank_final)
+                         .sort((a,b) => a.rank_final - b.rank_final)
+                         .slice(0, 5);
+
+      const regimeColor = { LEADER: '#B8BFC8', NEUTRAL: '#6A7A8A', LAGGARD: '#A85858' };
+      const tbody = document.getElementById('live-rankings-body');
+      const dateEl = document.getElementById('live-rankings-date');
+
+      if (dateEl) dateEl.textContent = `As of ${latestDate} · Updated weekly`;
+
+      if (tbody && latest.length > 0) {
+        tbody.innerHTML = latest.map(r => {
+          const regime = (r.regime || 'NEUTRAL').toUpperCase();
+          const color = regimeColor[regime] || '#6A7A8A';
+          const pct = Math.min(100, Math.max(5, (r.rank_final / latest.length) * 100));
+          return `<tr>
+            <td><span class="rank-badge ${r.rank_final <= 3 ? 'rank-top' : ''}">#${r.rank_final}</span></td>
+            <td><span class="ticker">${r.ticker}</span></td>
+            <td><div class="score-bar-wrap"><div class="score-bar"><div class="score-bar-fill" style="width:${100 - pct + 10}%"></div></div></div></td>
+            <td><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:${color};letter-spacing:0.06em;">${regime}</span></td>
+          </tr>`;
+        }).join('');
+      }
+    } catch(e) {
+      // silently fail — static fallback stays visible
+    }
+  }
+
+  loadLiveRankings();
+
+  // Global bilingual toggle
+  function setLang(lang) {
+    var en = document.querySelectorAll('.t-en, .meth-en');
+    var es = document.querySelectorAll('.t-es, .meth-es');
+    var lbEn = document.getElementById('lb-en');
+    var lbEs = document.getElementById('lb-es');
+    var mbEn = document.getElementById('meth-btn-en');
+    var mbEs = document.getElementById('meth-btn-es');
+    if (lang === 'es') {
+      en.forEach(function(el) { el.style.display = 'none'; });
+      es.forEach(function(el) { el.style.display = ''; });
+      if (lbEn) { lbEn.classList.add('inactive'); lbEn.style.background='rgba(184,191,200,0.15)'; lbEn.style.color='var(--gold)'; }
+      if (lbEs) { lbEs.classList.add('active'); lbEs.style.background='var(--gold)'; lbEs.style.color='var(--obsidian)'; }
+      if (mbEn) { mbEn.style.background='transparent'; mbEn.style.color='var(--gold)'; mbEn.style.border='2px solid var(--gold)'; }
+      if (mbEs) { mbEs.style.background='var(--gold)'; mbEs.style.color='var(--obsidian)'; mbEs.style.border='2px solid var(--gold)'; }
+      localStorage.setItem('mal_lang','es');
+    } else {
+      en.forEach(function(el) { el.style.display = ''; });
+      es.forEach(function(el) { el.style.display = 'none'; });
+      if (lbEn) { lbEn.classList.remove('inactive'); lbEn.style.background='var(--gold)'; lbEn.style.color='var(--obsidian)'; }
+      if (lbEs) { lbEs.classList.remove('active'); lbEs.style.background='rgba(184,191,200,0.15)'; lbEs.style.color='var(--gold)'; }
+      if (mbEn) { mbEn.style.background='var(--gold)'; mbEn.style.color='var(--obsidian)'; mbEn.style.border='2px solid var(--gold)'; }
+      if (mbEs) { mbEs.style.background='transparent'; mbEs.style.color='var(--gold)'; mbEs.style.border='2px solid var(--gold)'; }
+      localStorage.setItem('mal_lang','en');
+    }
+  }
+  // Restore saved lang
+  (function() {
+    var saved = localStorage.getItem('mal_lang');
+    if (saved === 'es') setLang('es');
+  })();
+
+  // Scroll reveal — activa animaciones solo si JS funciona correctamente
+  document.documentElement.classList.add('js-loaded');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(el => {
+      if (el.isIntersecting) {
+        el.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Score bar animation on reveal
+  const scoreObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.querySelectorAll('.score-fill, .score-bar-fill').forEach(bar => {
+          const w = bar.style.width;
+          bar.style.width = '0';
+          setTimeout(() => { bar.style.transition = 'width 0.8s ease'; bar.style.width = w; }, 200);
+        });
+      }
+    });
+  }, { threshold: 0.2 });
+
+  document.querySelectorAll('.table-wrapper, .hero-widget').forEach(el => scoreObserver.observe(el));
+
+  // PRO modal
+  function showProModal() {
+    document.getElementById('proModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function hideProModal(e) {
+    if (!e || e.target === document.getElementById('proModal') || e.target.classList.contains('pro-modal-close') || e.target.closest('a')) {
+      document.getElementById('proModal').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  }
+
+  // Make locked column headers clickable
+  document.querySelectorAll('.col-locked').forEach(el => {
+    el.style.cursor = 'pointer';
+    el.addEventListener('click', showProModal);
+  });
+
+  // Make blurred cells clickable
+  document.querySelectorAll('.blur-row').forEach(row => {
+    row.style.cursor = 'pointer';
+    row.addEventListener('click', showProModal);
+  });
+</script>
+
+<!-- HOW TO USE SECTION -->
+<section id="reference" style="background:#080808;border-top:1px solid #1E1E1E;padding:80px 48px;">
+  <div style="max-width:680px;margin:0 auto;text-align:center;">
+
+    <!-- Eyebrow -->
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#B8BFC8;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:20px;display:inline-flex;align-items:center;gap:10px;">
+      <span style="display:block;width:24px;height:1px;background:#B8BFC8;"></span>
+      <span class="t-en">Getting Started</span><span class="t-es" style="display:none">Para Empezar</span>
+    </div>
+
+    <!-- Title -->
+    <h2 style="font-family:'Playfair Display',serif;font-size:clamp(28px,3vw,42px);line-height:1.1;margin-bottom:12px;">
+      <span class="t-en">From leadership data to <em style="font-style:italic;color:#B8BFC8;">portfolio decisions.</em></span><span class="t-es" style="display:none">De los datos de liderazgo a <em style="font-style:italic;color:#B8BFC8;">decisiones de cartera.</em></span>
+    </h2>
+    <p style="font-family:'Inter',sans-serif;font-size:15px;color:#6A7A8A;font-weight:300;line-height:1.7;margin-bottom:52px;">
+      <span class="t-en">Miner Alpha Lab turns weekly leadership rankings into a structured research process.</span><span class="t-es" style="display:none">Miner Alpha Lab convierte los rankings semanales de liderazgo en un proceso de investigación estructurado.</span>
+    </p>
+
+    <!-- Steps -->
+    <div style="display:flex;flex-direction:column;gap:0;text-align:left;margin-bottom:52px;">
+
+      <div style="display:flex;gap:20px;align-items:flex-start;padding:20px 24px;border:1px solid #1E1E1E;border-bottom:none;background:#0F0F0F;position:relative;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#B8BFC8;min-width:24px;padding-top:2px;">01</div>
+        <div>
+          <div style="font-family:'Playfair Display',serif;font-size:17px;color:#D8D8D8;margin-bottom:4px;"><span class="t-en">Detect Early Leadership</span><span class="t-es" style="display:none">Detecta liderazgo temprano</span></div>
+          <div style="font-family:'Inter',sans-serif;font-size:13px;color:#6A7A8A;font-weight:300;line-height:1.6;"><span class="t-en">Assets accelerating through rankings before the market notices.</span><span class="t-es" style="display:none">Activos que aceleran en el ranking antes de que el mercado lo perciba.</span></div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:20px;align-items:flex-start;padding:20px 24px;border:1px solid #1E1E1E;border-bottom:none;background:#141414;position:relative;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#B8BFC8;min-width:24px;padding-top:2px;">02</div>
+        <div>
+          <div style="font-family:'Playfair Display',serif;font-size:17px;color:#D8D8D8;margin-bottom:4px;"><span class="t-en">Confirm Persistent Leaders</span><span class="t-es" style="display:none">Confirma líderes persistentes</span></div>
+          <div style="font-family:'Inter',sans-serif;font-size:13px;color:#6A7A8A;font-weight:300;line-height:1.6;"><span class="t-en">Persistence across weeks is the signal. Not a single spike.</span><span class="t-es" style="display:none">La persistencia durante semanas es la señal. No un pico puntual.</span></div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:20px;align-items:flex-start;padding:20px 24px;border:1px solid #B8BFC8;background:#141414;position:relative;">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(to right,#B8BFC8,transparent);"></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#B8BFC8;min-width:24px;padding-top:2px;">03</div>
+        <div>
+          <div style="font-family:'Playfair Display',serif;font-size:17px;color:#E8EBF0;margin-bottom:4px;"><span class="t-en">Monitor Exit Risk</span><span class="t-es" style="display:none">Vigila el riesgo de deterioro</span></div>
+          <div style="font-family:'Inter',sans-serif;font-size:13px;color:#6A7A8A;font-weight:300;line-height:1.6;"><span class="t-en">Structural deterioration appears in the data before price confirms it.</span><span class="t-es" style="display:none">El deterioro estructural aparece en los datos antes de que el precio lo confirme.</span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- CTA -->
+    <a href="https://mineralphalab.streamlit.app/" class="btn-primary" style="display:inline-block;padding:14px 36px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:400;letter-spacing:0.14em;text-transform:uppercase;background:transparent;color:#B8BFC8;border:1px solid #B8BFC8;text-decoration:none;">
+      <span class="t-en">Access the Decision Engine →</span><span class="t-es" style="display:none">Accede al Motor de Decisión →</span>
+    </a>
+
+  </div>
+</section>
+</div>
+
+</body>
+</html>
